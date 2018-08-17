@@ -169,7 +169,7 @@ def unmount_all(config: Dict[str, str]) -> None:
     remote_encrypted = mount_base / 'acd-encrypted'
     remote_decrypted = mount_base / 'acd-decrypted'
     local_encrypted = mount_base / 'local-encrypted'
-    unmount_lock_file = Path(__file__) / 'unmount.acd'
+    unmount_lock_file = Path(__file__).parent / 'unmount.acd'
 
     _unmount(mountpoint=data_dir)
     unmount_lock_file.touch()
@@ -187,7 +187,7 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
     """
     Upload local data to the cloud.
     """
-    upload_pid_file = Path(__file__) / 'upload.pid'
+    upload_pid_file = Path(__file__).parent / 'upload.pid'
     if upload_pid_file.exists():
         running_pid = upload_pid_file.read_text()
         if len(running_pid):
@@ -463,7 +463,7 @@ def mount(ctx: click.core.Context, config: Dict[str, str]) -> None:
 
 
 def _acd_cli_mount(config: Dict[str, str]):
-    unmount_lock_file = Path(__file__) / 'unmount.acd'
+    unmount_lock_file = Path(__file__).parent / 'unmount.acd'
     mount_base = Path(config['mount_base'])
     remote_encrypted = mount_base / 'acd-encrypted'
     chunks_dir = mount_base / 'chunks'
