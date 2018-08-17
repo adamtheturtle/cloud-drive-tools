@@ -258,6 +258,7 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
             ).format(
                 upload_attempts=upload_attempts,
             )
+            LOGGER.error(msg=message)
 
             if upload_attempts >= 5:
                 message = 'Upload failed 5 times - giving up'
