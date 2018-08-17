@@ -220,7 +220,11 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
         '.unionfs-fuse',
     ]
 
-    exclude_name_result = subprocess.run(args=exclude_name_args, check=True)
+    exclude_name_result = subprocess.run(
+        args=exclude_name_args,
+        check=True,
+        stdout=subprocess.PIPE,
+    )
     exclude_name = exclude_name_result.stdout
 
     upload_args = [
