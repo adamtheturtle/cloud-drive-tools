@@ -70,7 +70,7 @@ def _validate_config(
 def config_option(command: Callable[..., None]) -> Callable[..., None]:
     """
     """
-    default_config_path = Path(__file__) / 'vars.yaml'
+    default_config_path = Path('vars.yaml')
 
     function = click.option(
         '--config',
