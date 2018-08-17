@@ -155,12 +155,7 @@ def _unmount(mountpoint: Path) -> None:
     subprocess.run(args=unmount_args, check=True)
 
 
-@click.command('unmount-all')
-@config_option
-def unmount_all(config: Dict[str, str]) -> None:
-    """
-    Unmount all mountpoints associated with ACDTools.
-    """
+def _unmount_all(config: Dict[str, str]) -> None:
     message = 'Unmounting all ACDTools mountpoints'
     LOGGER.info(message)
 
@@ -178,6 +173,15 @@ def unmount_all(config: Dict[str, str]) -> None:
     unmount_lock_file.unlink()
     _unmount(mountpoint=remote_decrypted)
     _unmount(mountpoint=local_encrypted)
+
+
+@click.command('unmount-all')
+@config_option
+def unmount_all(config: Dict[str, str]) -> None:
+    """
+    Unmount all mountpoints associated with ACDTools.
+    """
+    _unmount_all(config=config)
 
 
 @click.command('upload')
@@ -466,7 +470,7 @@ def mount(ctx: click.core.Context, config: Dict[str, str]) -> None:
         rclone_binary=rclone_binary,
         plexdrive_binary=plexdrive_binary,
     )
-    unmount_all()
+    _unmount_all(config=config)
     _mount(config=config)
 
 
