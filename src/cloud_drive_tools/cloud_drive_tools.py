@@ -230,6 +230,7 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
     upload_args = [
         str(rclone_binary),
         '-v',
+        'copy',
     ]
     if exclude_name:
         upload_args += [
@@ -247,8 +248,6 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
 
     children = str(local_encrypted.glob('*'))
     upload_attempts = 0
-
-    print(' '.join(upload_args))
 
     if children:
         while subprocess.run(args=upload_args).returncode != 0:
