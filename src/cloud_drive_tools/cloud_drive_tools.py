@@ -225,7 +225,7 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
         check=True,
         stdout=subprocess.PIPE,
     )
-    exclude_name = exclude_name_result.stdout
+    exclude_name = exclude_name_result.stdout.decode()
 
     upload_args = [
         str(rclone_binary),
