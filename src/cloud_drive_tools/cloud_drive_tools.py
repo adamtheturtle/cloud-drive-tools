@@ -182,6 +182,7 @@ def unmount_all(config: Dict[str, str]) -> None:
 
 @click.command('upload')
 @config_option
+@click.pass_context
 def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
     """
     Upload local data to the cloud.
@@ -366,6 +367,7 @@ def _sync_deletes(config: Dict[str, str]) -> None:
 
 @click.command('sync-deletes')
 @config_option
+@click.pass_context
 def sync_deletes(ctx: click.core.Context, config: Dict[str, str]) -> None:
     """
     Reflect unionfs deleted file objects on Google Drive.
@@ -446,6 +448,7 @@ def _mount(config: Dict[str, str]) -> None:
 
 @click.command('mount')
 @config_option
+@click.pass_context
 def mount(ctx: click.core.Context, config: Dict[str, str]) -> None:
     rclone_binary = Path(config['rclone'])
     plexdrive_binary = Path(config['plexdrive'])
@@ -498,6 +501,7 @@ def _acd_cli_mount(config: Dict[str, str]):
 
 @click.command('acd-cli-mount')
 @config_option
+@click.pass_context
 def acd_cli_mount(ctx: click.core.Context, config: Dict[str, str]) -> None:
     """
     Foreground mount which will keep remounting until unmount file exists.
