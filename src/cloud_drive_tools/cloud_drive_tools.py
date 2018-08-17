@@ -208,6 +208,7 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
     mount_base = Path(config['mount_base'])
     remote_encrypted = mount_base / 'acd-encrypted'
     local_encrypted = mount_base / 'local-encrypted'
+    path_on_cloud_drive = config['path_on_cloud_drive']
 
     # Determine the .unionfs-fuse directory name as to not upload it
     exclude_name_args = [
@@ -235,7 +236,8 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
     upload_args += [
         str(local_encrypted),
         '{rclone_remote}:{path_on_cloud_drive}'.format(
-            rclone_remote,
+            rclone_remote=rclone_remote,
+            path_on_cloud_drive=path_on_cloud_drive,
         ),
     ]
 
