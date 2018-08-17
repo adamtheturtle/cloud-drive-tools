@@ -226,7 +226,7 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
         str(rclone_binary),
         '-v',
     ]
-    if len(exclude_name):
+    if exclude_name:
         upload_args += [
             '--exclude',
             '/{exclude_name}/*'.format(exclude_name=exclude_name),
