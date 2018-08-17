@@ -40,7 +40,7 @@ def _validate_config(
 
     allowed_keys = {*required_keys, *optional_keys}
 
-    config = yaml.load(str(value))
+    config = yaml.load(Path(value).read_text()) or {}
 
     missing_required_keys = required_keys - config.keys()
     extra_keys = config.keys() - allowed_keys
