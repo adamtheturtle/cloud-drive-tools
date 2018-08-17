@@ -13,6 +13,6 @@ setup(
     package_dir={'': 'src'},
     entry_points="""
         [console_scripts]
-        cloud-drive-tools=cloud_drive_tools
+        cloud-drive-tools=cloud_drive_tools:cloud_drive_tools
     """,
 )
