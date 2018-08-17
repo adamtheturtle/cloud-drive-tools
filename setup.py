@@ -5,7 +5,7 @@ Setup script for Cloud Drive Tools.
 from setuptools import find_packages, setup
 
 setup(
-    name='Cloud Drive Tools',
+    name='cloud-drive-tools',
     author='Adam Dangoor',
     author_email='adamdangoor@gmail.com',
     install_requires=['click', 'PyYAML'],
