@@ -3,6 +3,7 @@ import logging
 import os
 import shutil
 import subprocess
+import tempfile
 import time
 from pathlib import Path
 from typing import Callable, Dict, Optional, Union
@@ -40,7 +41,7 @@ def _validate_config(
 
     allowed_keys = {*required_keys, *optional_keys}
 
-    config = yaml.load(Path(value).read_text()) or {}
+    config = yaml.load(Path(str(value)).read_text()) or {}
 
     missing_required_keys = required_keys - config.keys()
     extra_keys = config.keys() - allowed_keys
@@ -416,9 +417,23 @@ def _mount(config: Dict[str, str]) -> None:
 
     message = 'Mounting cloud storage drive'
     LOGGER.info(message)
-    # In the original script this is in a ``screen``.
-    # Why?
-    _acd_cli_mount(config=config)
+    _, config_file_path_str = tempfile.mkstemp()
+    config_file_path = Path(config_file_path_str)
+    config_contents = yaml.dump(data=config)
+    config_file_path.write_text(config_contents)
+
+    screen_args = [
+        'screen',
+        '-dm',
+        '-S',
+        'cloud-drive-tools-mount',
+        'cloud-drive-tools',
+        'mount',
+        '-c',
+        str(config_file_path),
+    ]
+
+    subprocess.run(args=screen_args, check=True)
 
     message = 'Mounting local encrypted filesystem'
     LOGGER.info(message)
