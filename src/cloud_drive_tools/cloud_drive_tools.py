@@ -172,7 +172,10 @@ def _unmount_all(config: Dict[str, str]) -> None:
     unmount_lock_file.touch()
     _unmount(mountpoint=remote_encrypted)
     time.sleep(6)
-    unmount_lock_file.unlink()
+    try:
+        unmount_lock_file.unlink()
+    except FileNotFoundError:
+        pass
     _unmount(mountpoint=remote_decrypted)
     _unmount(mountpoint=local_encrypted)
 
