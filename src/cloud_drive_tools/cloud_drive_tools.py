@@ -22,6 +22,33 @@ def cloud_drive_tools() -> None:
     """
 
 
+def _pre_command_setup(
+    ctx: click.core.Context,
+    config: Dict[str, str],
+) -> None:
+    encfs6_config = str(config['encfs6_config'])
+    os.environ['ENCFS6_CONFIG'] = encfs6_config
+
+    rclone_binary = Path(config['rclone'])
+    plexdrive_binary = Path(config['plexdrive'])
+
+    dependencies = (
+        rclone_binary,
+        plexdrive_binary,
+        'unionfs-fuse',
+        'encfs',
+        'fusermount',
+        'screen',
+    )
+    for dependency in dependencies:
+        if shutil.which(str(dependency)) is None:
+            message = '"{dependency}" is not available on the PATH.'.format(
+                dependency=dependency,
+            )
+
+            ctx.fail(message=message)
+
+
 def _validate_config(
     ctx: click.core.Context,
     param: Union[click.core.Option, click.core.Parameter],
@@ -115,28 +142,6 @@ def _local_cleanup(config: Dict[str, str]) -> None:
             path.unlink()
 
 
-def _dependency_check(
-    ctx: click.core.Context,
-    rclone_binary: Path,
-    plexdrive_binary: Path,
-) -> None:
-    dependencies = (
-        rclone_binary,
-        plexdrive_binary,
-        'unionfs-fuse',
-        'encfs',
-        'fusermount',
-        'screen',
-    )
-    for dependency in dependencies:
-        if shutil.which(str(dependency)) is None:
-            message = '"{dependency}" is not available on the PATH.'.format(
-                dependency=dependency,
-            )
-
-            ctx.fail(message=message)
-
-
 def _is_mountpoint(name: str) -> bool:
     proc_mounts = Path('/proc/mounts').read_text().split('\n')
     for mount_line in proc_mounts:
@@ -212,17 +217,12 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
     Upload local data to the cloud.
     """
     rclone_binary = Path(config['rclone'])
-    plexdrive_binary = Path(config['plexdrive'])
-    _dependency_check(
-        ctx=ctx,
-        rclone_binary=rclone_binary,
-        plexdrive_binary=plexdrive_binary,
-    )
+    _pre_command_setup(ctx=ctx, config=config)
 
     upload_pid_file = Path(__file__).parent / 'upload.pid'
     if upload_pid_file.exists():
         running_pid = upload_pid_file.read_text()
-        if len(running_pid):
+        if running_pid:
             proc_file = Path('/proc') / running_pid
             if proc_file.exists():
                 message = 'Upload script already running'
@@ -411,14 +411,7 @@ def sync_deletes(ctx: click.core.Context, config: Dict[str, str]) -> None:
     """
     Reflect unionfs deleted file objects on Google Drive.
     """
-    rclone_binary = Path(config['rclone'])
-    plexdrive_binary = Path(config['plexdrive'])
-
-    _dependency_check(
-        ctx=ctx,
-        rclone_binary=rclone_binary,
-        plexdrive_binary=plexdrive_binary,
-    )
+    _pre_command_setup(ctx=ctx, config=config)
     _sync_deletes(config=config)
 
 
@@ -511,14 +504,7 @@ def _mount(config: Dict[str, str]) -> None:
 @config_option
 @click.pass_context
 def mount(ctx: click.core.Context, config: Dict[str, str]) -> None:
-    rclone_binary = Path(config['rclone'])
-    plexdrive_binary = Path(config['plexdrive'])
-
-    _dependency_check(
-        ctx=ctx,
-        rclone_binary=rclone_binary,
-        plexdrive_binary=plexdrive_binary,
-    )
+    _pre_command_setup(ctx=ctx, config=config)
     _unmount_all(config=config)
     _mount(config=config)
 
@@ -567,14 +553,7 @@ def acd_cli_mount(ctx: click.core.Context, config: Dict[str, str]) -> None:
     """
     Foreground mount which will keep remounting until unmount file exists.
     """
-    rclone_binary = Path(config['rclone'])
-    plexdrive_binary = Path(config['plexdrive'])
-
-    _dependency_check(
-        ctx=ctx,
-        rclone_binary=rclone_binary,
-        plexdrive_binary=plexdrive_binary,
-    )
+    _pre_command_setup(ctx=ctx, config=config)
     _acd_cli_mount(config=config)
 
 
