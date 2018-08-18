@@ -423,7 +423,7 @@ def _mount(config: Dict[str, str]) -> None:
     encfs_pass = str(config['encfs_pass'])
 
     path_on_cloud_drive = config['path_on_cloud_drive']
-    remote_mount = remote_encrypted / path_on_cloud_drive
+    remote_mount = str(remote_encrypted) + '//' + path_on_cloud_drive
 
     message = 'Mounting cloud storage drive'
     LOGGER.info(message)
@@ -461,7 +461,7 @@ def _mount(config: Dict[str, str]) -> None:
     encfs_args = [
         'encfs',
         '--extpass=echo {encfs_pass}'.format(encfs_pass=encfs_pass),
-        str(remote_mount),
+        remote_mount,
         str(remote_decrypted),
     ]
     subprocess.run(args=encfs_args, check=True)
