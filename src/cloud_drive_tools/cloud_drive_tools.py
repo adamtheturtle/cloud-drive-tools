@@ -405,11 +405,19 @@ def _mount(config: Dict[str, str]) -> None:
     local_decrypted = mount_base / 'local-decrypted'
     data_dir = Path(config['data_dir'])
 
-    remote_encrypted.mkdir(parents=True, exist_ok=True)
-    remote_decrypted.mkdir(parents=True, exist_ok=True)
-    local_encrypted.mkdir(parents=True, exist_ok=True)
-    local_decrypted.mkdir(parents=True, exist_ok=True)
-    data_dir.mkdir(parents=True, exist_ok=True)
+    dirs_to_create = [
+        remote_encrypted,
+        remote_decrypted,
+        local_encrypted,
+        local_decrypted,
+        data_dir,
+    ]
+
+    for directory in dirs_to_create:
+        try:
+            directory.mkdir(parents=True, exist_ok=True)
+        except FileExistsError:
+            pass
 
     encfs_pass = str(config['encfs_pass'])
 
