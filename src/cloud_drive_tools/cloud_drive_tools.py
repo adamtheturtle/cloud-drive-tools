@@ -211,6 +211,14 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
     """
     Upload local data to the cloud.
     """
+    rclone_binary = Path(config['rclone'])
+    plexdrive_binary = Path(config['plexdrive'])
+    _dependency_check(
+        ctx=ctx,
+        rclone_binary=rclone_binary,
+        plexdrive_binary=plexdrive_binary,
+    )
+
     upload_pid_file = Path(__file__).parent / 'upload.pid'
     if upload_pid_file.exists():
         running_pid = upload_pid_file.read_text()
@@ -226,7 +234,6 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
     upload_pid_file.write_text(str(current_pid))
     _sync_deletes(config=config)
 
-    rclone_binary = Path(config['rclone'])
     rclone_remote = 'Google'
 
     mount_base = Path(config['mount_base'])
