@@ -405,11 +405,11 @@ def _mount(config: Dict[str, str]) -> None:
     local_decrypted = mount_base / 'local-decrypted'
     data_dir = Path(config['data_dir'])
 
-    remote_encrypted.mkdir(exist_ok=True)
-    remote_decrypted.mkdir(exist_ok=True)
-    local_encrypted.mkdir(exist_ok=True)
-    local_decrypted.mkdir(exist_ok=True)
-    data_dir.mkdir(exist_ok=True)
+    remote_encrypted.mkdir(parents=True, exist_ok=True)
+    remote_decrypted.mkdir(parents=True, exist_ok=True)
+    local_encrypted.mkdir(parents=True, exist_ok=True)
+    local_decrypted.mkdir(parents=True, exist_ok=True)
+    data_dir.mkdir(parents=True, exist_ok=True)
 
     encfs_pass = str(config['encfs_pass'])
 
@@ -495,7 +495,7 @@ def _acd_cli_mount(config: Dict[str, str]):
     mount_base = Path(config['mount_base'])
     remote_encrypted = mount_base / 'acd-encrypted'
     chunks_dir = mount_base / 'chunks'
-    chunks_dir.mkdir(exist_ok=True)
+    chunks_dir.mkdir(parents=True, exist_ok=True)
     plexdrive_binary = Path(config['plexdrive'])
 
     while not unmount_lock_file.exists():
