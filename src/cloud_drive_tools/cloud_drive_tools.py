@@ -238,7 +238,7 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
     exclude_name_args = [
         'encfsctl',
         'encode',
-        '--extpass'
+        '--extpass',
         'echo {encfs_pass}'.format(encfs_pass=encfs_pass),
         str(remote_encrypted),
         '.unionfs-fuse',
@@ -326,7 +326,7 @@ def _sync_deletes(config: Dict[str, str]) -> None:
         encfsctl_args = [
             'encfsctl',
             'encode',
-            '--extpass'
+            '--extpass',
             'echo {encfs_pass}'.format(encfs_pass=encfs_pass),
             str(remote_encrypted),
             '"{filename}"'.format(filename=filename),
@@ -466,7 +466,7 @@ def _mount(config: Dict[str, str]) -> None:
     LOGGER.info(message)
     encfs_args = [
         'encfs',
-        '--extpass'
+        '--extpass',
         'echo {encfs_pass}'.format(encfs_pass=encfs_pass),
         '--reverse',
         str(local_decrypted),
@@ -478,7 +478,7 @@ def _mount(config: Dict[str, str]) -> None:
     LOGGER.info(message)
     encfs_args = [
         'encfs',
-        '--extpass'
+        '--extpass',
         'echo {encfs_pass}'.format(encfs_pass=encfs_pass),
         remote_mount,
         str(remote_decrypted),
