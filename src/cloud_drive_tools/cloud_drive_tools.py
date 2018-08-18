@@ -12,6 +12,7 @@ import click
 import yaml
 
 LOGGER = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 @click.group(name='cloud-drive-tools')
