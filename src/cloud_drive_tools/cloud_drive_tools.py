@@ -139,10 +139,11 @@ def _dependency_check(
 
 def _is_mountpoint(name: str) -> bool:
     proc_mounts = Path('/proc/mounts').read_text().split('\n')
-    for mount in proc_mounts:
-        path = mount.split()[1]
-        if path == name:
-            return True
+    for mount_line in proc_mounts:
+        if mount_line:
+            path = mount_line.split()[1]
+            if path == name:
+                return True
     return False
 
 
