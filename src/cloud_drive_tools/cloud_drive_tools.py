@@ -505,7 +505,7 @@ def _acd_cli_mount(config: Dict[str, str]):
         plexdrive_args = [
             str(plexdrive_binary),
             '-o',
-            'allow-other,read_only',
+            'allow_other,read_only',
             '-v',
             '2',
             '-t',
