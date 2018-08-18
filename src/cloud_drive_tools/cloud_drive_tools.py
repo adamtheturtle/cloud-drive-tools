@@ -429,7 +429,7 @@ def _mount(config: Dict[str, str]) -> None:
         '-S',
         'cloud-drive-tools-mount',
         'cloud-drive-tools',
-        'mount',
+        'acd-cli-mount',
         '-c',
         str(config_file_path),
     ]
