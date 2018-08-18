@@ -137,14 +137,22 @@ def _dependency_check(
             ctx.fail(message=message)
 
 
+def _is_mountpoint(name: str) -> bool:
+    proc_mounts = Path('/proc/mounts').read_text().split('\n')
+    for mount in proc_mounts:
+        path = mount.split()[1]
+        if path == name:
+            return True
+    return False
+
+
 def _unmount(mountpoint: Path) -> None:
     """
     Unmount a mountpoint. Will not unmount if not already mounted.
 
     This does not work on macOS as ``fusermount`` does not exist.
     """
-    is_mountpoint = os.path.ismount(path=str(mountpoint))
-    if not is_mountpoint:
+    if not _is_mountpoint(name=str(mountpoint)):
         message = 'Cannot unmount "{mountpoint}" - it is not mounted'.format(
             mountpoint=str(mountpoint),
         )
