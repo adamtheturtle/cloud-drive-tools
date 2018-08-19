@@ -426,10 +426,7 @@ def _mount(config: Dict[str, str]) -> None:
     ]
 
     for directory in dirs_to_create:
-        try:
-            directory.mkdir(parents=True, exist_ok=True)
-        except FileExistsError:
-            pass
+        directory.mkdir(parents=True, exist_ok=True)
 
     encfs_pass = str(config['encfs_pass'])
 
