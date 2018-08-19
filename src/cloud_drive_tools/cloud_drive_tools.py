@@ -76,7 +76,7 @@ def _validate_config(
             'plexdrive',
             'rclone',
             'rclone_remote',
-        ]
+        ],
     )
     optional_keys = set(['http_proxy', 'https_proxy'])
 
