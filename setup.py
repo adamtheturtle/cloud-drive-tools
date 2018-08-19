@@ -23,6 +23,9 @@ setup(
     install_requires=INSTALL_REQUIRES,
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
+    extras_require={
+        'dev': DEV_REQUIRES,
+    },
     entry_points="""
         [console_scripts]
         cloud-drive-tools=cloud_drive_tools:cloud_drive_tools
