@@ -169,12 +169,6 @@ def _unmount(mountpoint: Path) -> None:
     LOGGER.info(msg=message)
     unmount_args = ['fusermount', '-u', str(mountpoint)]
     subprocess.run(args=unmount_args, check=True)
-    # Sometimes this is needed.
-    try:
-        unmount_args = ['umount', '-l', str(mountpoint)]
-        subprocess.run(args=unmount_args, check=True)
-    except subprocess.CalledProcessError:
-        pass
 
 
 def _unmount_all(config: Dict[str, str]) -> None:
