@@ -33,6 +33,7 @@ path_on_cloud_drive: "/Media"
 plexdrive: "/home/plexdrive"
 rclone: "/home/rclone-v1.37-linux-amd64/rclone"
 rclone_remote: "Google"
+cloud_drive_tools_path: "/root/.local/bin/cloud-drive-tools"
 ```
 
 ## Installing

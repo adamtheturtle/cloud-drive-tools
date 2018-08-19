@@ -67,6 +67,7 @@ def _validate_config(
 
     required_keys = set(
         [
+            'cloud_drive_tools_path',
             'data_dir',
             'days_to_keep_local',
             'encfs6_config',
@@ -429,6 +430,7 @@ def sync_deletes(ctx: click.core.Context, config: Dict[str, str]) -> None:
 
 def _mount(config: Dict[str, str]) -> None:
     mount_base = Path(config['mount_base'])
+    cloud_drive_tools_path = Path(config['cloud_drive_tools_path'])
     remote_encrypted = mount_base / 'acd-encrypted'
     remote_decrypted = mount_base / 'acd-decrypted'
     local_encrypted = mount_base / 'local-encrypted'
@@ -463,7 +465,7 @@ def _mount(config: Dict[str, str]) -> None:
         '-dm',
         '-S',
         'cloud-drive-tools-mount',
-        'cloud-drive-tools',
+        str(cloud_drive_tools_path),
         'acd-cli-mount',
         '-c',
         str(config_file_path),
