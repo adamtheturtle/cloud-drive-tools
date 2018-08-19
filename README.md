@@ -21,6 +21,8 @@ and optionally:
 * `http_proxy`
 * `https_proxy`
 
+The optional values currently do nothing.
+
 For example:
 
 ```yaml
