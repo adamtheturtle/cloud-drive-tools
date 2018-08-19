@@ -510,14 +510,24 @@ def _mount(config: Dict[str, str]) -> None:
 
 
 @click.command('mount')
+@click.option(
+    '--no-unmount',
+    is_flag=True,
+    help='Do not unmount before trying to mount filesystems.',
+)
 @config_option
 @click.pass_context
-def mount(ctx: click.core.Context, config: Dict[str, str]) -> None:
+def mount(
+    ctx: click.core.Context,
+    config: Dict[str, str],
+    no_unmount: bool,
+) -> None:
     """
     Mount necessary directories.
     """
     _pre_command_setup(ctx=ctx, config=config)
-    _unmount_all(config=config)
+    if not no_unmount:
+        _unmount_all(config=config)
     _mount(config=config)
 
 
