@@ -196,10 +196,12 @@ def _unmount_all(config: Dict[str, str]) -> None:
 
 @click.command('unmount')
 @config_option
-def unmount_all(config: Dict[str, str]) -> None:
+@click.pass_context
+def unmount_all(ctx: click.core.Context, config: Dict[str, str]) -> None:
     """
     Unmount all mountpoints associated with ACDTools.
     """
+    _pre_command_setup(ctx=ctx, config=config)
     _unmount_all(config=config)
 
 
@@ -210,8 +212,9 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
     """
     Upload local data to the cloud.
     """
-    rclone_binary = Path(config['rclone'])
     _pre_command_setup(ctx=ctx, config=config)
+
+    rclone_binary = Path(config['rclone'])
 
     upload_pid_file = Path(__file__).parent / 'upload.pid'
     if upload_pid_file.exists():
