@@ -44,7 +44,7 @@ pydocstyle:
 
 .PHONY: pylint
 pylint:
-	pylint *.py src/ tests/ admin/
+	pylint *.py src/
 
 .PHONY: pyroma
 pyroma:
@@ -74,7 +74,6 @@ lint: \
     pip-missing-reqs \
     pydocstyle \
     pylint \
-    shellcheck \
     vulture \
     yapf
 
