@@ -65,17 +65,19 @@ def _validate_config(
     for _ in (ctx, param):
         pass
 
-    required_keys = set([
-        'data_dir',
-        'days_to_keep_local',
-        'encfs6_config',
-        'encfs_pass',
-        'mount_base',
-        'path_on_cloud_drive',
-        'plexdrive',
-        'rclone',
-        'rclone_remote',
-    ])
+    required_keys = set(
+        [
+            'data_dir',
+            'days_to_keep_local',
+            'encfs6_config',
+            'encfs_pass',
+            'mount_base',
+            'path_on_cloud_drive',
+            'plexdrive',
+            'rclone',
+            'rclone_remote',
+        ]
+    )
     optional_keys = set(['http_proxy', 'https_proxy'])
 
     allowed_keys = {*required_keys, *optional_keys}
@@ -86,12 +88,13 @@ def _validate_config(
     extra_keys = config.keys() - allowed_keys
 
     if missing_required_keys:
-        message = ('Using configuration file at "{config_file_path}". '
-                   'Missing the following configuration keys: {missing_keys}.'
-                   ).format(
-                       config_file_path=str(value),
-                       missing_keys=', '.join(missing_required_keys),
-                   )
+        message = (
+            'Using configuration file at "{config_file_path}". '
+            'Missing the following configuration keys: {missing_keys}.'
+        ).format(
+            config_file_path=str(value),
+            missing_keys=', '.join(missing_required_keys),
+        )
         raise click.BadParameter(message)
 
     if extra_keys:
