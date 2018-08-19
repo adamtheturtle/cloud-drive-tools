@@ -194,7 +194,7 @@ def _unmount_all(config: Dict[str, str]) -> None:
     _unmount(mountpoint=local_encrypted)
 
 
-@click.command('unmount-all')
+@click.command('unmount')
 @config_option
 def unmount_all(config: Dict[str, str]) -> None:
     """
