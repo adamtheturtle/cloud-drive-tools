@@ -503,7 +503,7 @@ def mount(ctx: click.core.Context, config: Dict[str, str]) -> None:
     _mount(config=config)
 
 
-def _acd_cli_mount(config: Dict[str, str]):
+def _acd_cli_mount(config: Dict[str, str]) -> None:
     unmount_lock_file = Path(__file__).parent / 'unmount.acd'
     mount_base = Path(config['mount_base'])
     remote_encrypted = mount_base / 'acd-encrypted'
