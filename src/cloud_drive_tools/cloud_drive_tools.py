@@ -1,3 +1,10 @@
+"""
+Tools for managing an encrypted directory on a cloud drive.
+
+See https://github.com/msh100/ACDTools/blob/gdrive-support/acdtools for
+the inspiration.
+"""
+
 import datetime
 import logging
 import os
@@ -98,6 +105,7 @@ def _validate_config(
 
 def config_option(command: Callable[..., None]) -> Callable[..., None]:
     """
+    Click option for passing a configuration file.
     """
     default_config_path = Path('vars.yaml')
 
@@ -498,6 +506,9 @@ def _mount(config: Dict[str, str]) -> None:
 @config_option
 @click.pass_context
 def mount(ctx: click.core.Context, config: Dict[str, str]) -> None:
+    """
+    Mount necessary directories.
+    """
     _pre_command_setup(ctx=ctx, config=config)
     _unmount_all(config=config)
     _mount(config=config)
