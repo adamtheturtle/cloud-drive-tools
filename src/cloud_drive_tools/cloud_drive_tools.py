@@ -61,6 +61,10 @@ def _validate_config(
     param: Union[click.core.Option, click.core.Parameter],
     value: Optional[Union[int, bool, str]],
 ) -> Dict[str, str]:
+    # We "use" variables to satisfy linting tools.
+    for _ in (ctx, param):
+        pass
+
     required_keys = set([
         'data_dir',
         'days_to_keep_local',

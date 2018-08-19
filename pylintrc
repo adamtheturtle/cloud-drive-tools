@@ -1,0 +1,40 @@
+[MASTER]
+
+disable=line-too-long,
+        too-few-public-methods,
+        too-many-branches,
+        too-many-lines,
+        too-many-locals,
+        too-many-arguments,
+        too-many-statements,
+        too-many-instance-attributes,
+        locally-disabled,
+        # Let flake8 handle unused imports
+        unused-import,
+        # This creates errors with typing.py
+        # see https://github.com/PyCQA/pylint/issues/1212
+        invalid-sequence-index,
+        # Let isort deal with sorting
+        ungrouped-imports,
+        wrong-import-order,
+        # Let pydocstyle deal with docstrings
+        missing-docstring,
+        # We don't need everything to be documented because of mypy
+        missing-type-doc,
+        missing-returns-doc,
+        # Let YAPF deal with this
+        bad-continuation,
+        # What we want is spaces around keyword arguments which have type hints.
+        # However, YAPF can't do this. Therefore we use YAPF's default.
+        bad-whitespace,
+        # We document return types in type hints.
+        missing-return-type-doc,
+        # This is a pain for test files where tests are separated into
+        # classes.
+        no-self-use,
+        # This cannot be overridden when pylint is overzealous.
+        # See https://github.com/PyCQA/pylint/issues/214.
+        duplicate-code,
+        # Sometimes this has false positives.
+        # See https://github.com/PyCQA/pylint/issues/207.
+        no-value-for-parameter,
