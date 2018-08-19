@@ -463,9 +463,16 @@ def _mount(config: Dict[str, str]) -> None:
     config_file_path = Path(config_file_path_str)
     config_contents = yaml.dump(data=config)
     config_file_path.write_text(config_contents)
+    pid = os.getpid()
+    screen_log_dir = Path('/var/log')
+    screen_log_filename = 'cloud-drive-tools-screenlog.{pid}'.format(pid=pid)
+    screen_log_path = screen_log_dir / screen_log_filename
 
     screen_args = [
         'screen',
+        '-L',
+        '-Logfile',
+        str(screen_log_path),
         '-dm',
         '-S',
         'cloud-drive-tools-mount',
