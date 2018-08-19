@@ -34,3 +34,26 @@ plexdrive: "/home/plexdrive"
 rclone: "/home/rclone-v1.37-linux-amd64/rclone"
 rclone_remote: "Google"
 ```
+
+## Installing
+
+Requires Python 3.5+.
+
+This can be installed with ``pip``, or ``pipsi``.
+
+For example on Ubuntu 18.04, install `pipsi`:
+
+```sh
+apt install -y python3-pip python3-venv
+pip3 install virtualenv
+curl https://raw.githubusercontent.com/bjoernpollex/pipsi/prefer-venv/get-pipsi.py | python3
+echo "export PATH=/root/.local/bin:$PATH" >> ~/.bashrc
+. ~/.bashrc
+```
+
+Then install `cloud-drive-tools`:
+
+```sh
+git clone https://github.com/adamtheturtle/cloud-drive-tools.git /home/cloud-drive-tools
+pipsi install /home/cloud-drive-tools
+```
