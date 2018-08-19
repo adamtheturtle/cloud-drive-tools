@@ -2,9 +2,9 @@ language: python
 python:
 - '3.6'
 before_install:
-- travis_retry pip3 install --user --upgrade pip setuptools
+- travis_retry pip3 install --upgrade pip setuptools
 install:
-- travis_retry pip3 install --user --upgrade --editable .[dev]
+- travis_retry pip3 install --upgrade --editable .[dev]
 cache: pip
 script:
 - make lint
