@@ -1,0 +1,9 @@
+python:
+- '3.6'
+before_install:
+- travis_retry pip install --upgrade pip setuptools
+install:
+- travis_retry pip install --upgrade --editable .[dev]
+cache: pip
+script:
+- make lint
