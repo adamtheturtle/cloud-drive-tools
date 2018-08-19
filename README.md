@@ -32,6 +32,7 @@ mount_base: "/home/.mounts"
 path_on_cloud_drive: "/Media"
 plexdrive: "/home/plexdrive"
 rclone: "/home/rclone-v1.37-linux-amd64/rclone"
+rclone_config_path: "/root/.config/rclone/rclone.conf"
 rclone_remote: "Google"
 cloud_drive_tools_path: "/root/.local/bin/cloud-drive-tools"
 ```

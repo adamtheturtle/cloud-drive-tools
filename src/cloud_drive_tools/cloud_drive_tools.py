@@ -76,6 +76,7 @@ def _validate_config(
             'path_on_cloud_drive',
             'plexdrive',
             'rclone',
+            'rclone_config_path',
             'rclone_remote',
         ],
     )
@@ -231,6 +232,7 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
     _pre_command_setup(ctx=ctx, config=config)
 
     rclone_binary = Path(config['rclone'])
+    rclone_config_path = Path(config['rclone_config_path'])
 
     upload_pid_file = Path(__file__).parent / 'upload.pid'
     if upload_pid_file.exists():
@@ -273,6 +275,8 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
 
     upload_args = [
         str(rclone_binary),
+        '--config',
+        str(rclone_config_path),
         '-v',
         'copy',
     ]
