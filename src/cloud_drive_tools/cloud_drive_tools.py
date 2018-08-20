@@ -432,7 +432,7 @@ def sync_deletes(ctx: click.core.Context, config: Dict[str, str]) -> None:
     _sync_deletes(config=config)
 
 
-def _mount(config: Dict[str, str]) -> None:
+def _mount(ctx: click.core.Context, config: Dict[str, str]) -> None:
     mount_base = Path(config['mount_base'])
     cloud_drive_tools_path = Path(config['cloud_drive_tools_path'])
     remote_encrypted = mount_base / 'acd-encrypted'
@@ -455,6 +455,7 @@ def _mount(config: Dict[str, str]) -> None:
     encfs_pass = str(config['encfs_pass'])
 
     path_on_cloud_drive = config['path_on_cloud_drive']
+    # pathlib.Path does not handle `///` well in a path.
     remote_mount = str(remote_encrypted) + '//' + path_on_cloud_drive
 
     message = 'Mounting cloud storage drive'
@@ -483,6 +484,21 @@ def _mount(config: Dict[str, str]) -> None:
     ]
 
     subprocess.run(args=screen_args, check=True)
+
+    # After `screen` starts it takes some time to mount the drive.
+    attempts = 0
+    while not os.path.exists(str(remote_mount)):
+        attempts += 1
+        if attempts > 5:
+            message = 'Remote mount not found after 5 attempts, exiting'
+            ctx.fail(message)
+
+        message = ('Remote mount {remote_mount} does not exist yet, waiting.'
+                   ).format(
+                       remote_mount=remote_mount,
+                   )
+        LOGGER.info(message)
+        time.sleep(5)
 
     message = 'Mounting local encrypted filesystem'
     LOGGER.info(message)
@@ -541,7 +557,7 @@ def mount(
     _pre_command_setup(ctx=ctx, config=config)
     if not no_unmount:
         _unmount_all(config=config)
-    _mount(config=config)
+    _mount(ctx=ctx, config=config)
 
 
 def _acd_cli_mount(config: Dict[str, str]) -> None:
