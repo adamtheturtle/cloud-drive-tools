@@ -414,7 +414,7 @@ def _sync_deletes(config: Dict[str, str]) -> None:
         # Remove the UnionFS hidden object.
         matched_file.unlink()
 
-    if failed_sync_deletes:
+    if not failed_sync_deletes:
         # Delete the search directory so that it is not uploaded as an
         # empty directory.
         search_dir.unlink()
