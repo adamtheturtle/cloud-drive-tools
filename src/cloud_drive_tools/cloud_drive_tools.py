@@ -330,6 +330,7 @@ def _sync_deletes(config: Dict[str, str]) -> None:
     search_dir = local_decrypted / '.unionfs-fuse'
 
     rclone_binary = Path(config['rclone'])
+    rclone_config_path = Path(config['rclone_config_path'])
     rclone_remote = 'Google'
 
     encfs_pass = str(config['encfs_pass'])
@@ -378,6 +379,8 @@ def _sync_deletes(config: Dict[str, str]) -> None:
 
         rclone_args = [
             str(rclone_binary),
+            '--config',
+            str(rclone_config_path),
             'ls',
             '--max-depth',
             '1',
