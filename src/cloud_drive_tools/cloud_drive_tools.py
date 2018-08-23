@@ -417,7 +417,7 @@ def _sync_deletes(config: Dict[str, str]) -> None:
     if not failed_sync_deletes:
         # Delete the search directory so that it is not uploaded as an
         # empty directory.
-        search_dir.unlink()
+        shutil.rmtree(search_dir)
         return
 
     message = 'Not clearing .unionfs directory as there were failures.'
