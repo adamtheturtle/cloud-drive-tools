@@ -567,8 +567,6 @@ def _acd_cli_mount(config: Dict[str, str]) -> None:
     unmount_lock_file = Path(__file__).parent / 'unmount.acd'
     mount_base = Path(config['mount_base'])
     remote_encrypted = mount_base / 'acd-encrypted'
-    chunks_dir = mount_base / 'chunks'
-    chunks_dir.mkdir(parents=True, exist_ok=True)
     plexdrive_binary = Path(config['plexdrive'])
 
     while not unmount_lock_file.exists():
@@ -577,13 +575,11 @@ def _acd_cli_mount(config: Dict[str, str]) -> None:
         _unmount(mountpoint=remote_encrypted)
         plexdrive_args = [
             str(plexdrive_binary),
+            'mount',
             '-o',
             'allow_other,read_only',
             '-v',
             '2',
-            '-t',
-            str(chunks_dir),
-            '--clear-chunk-max-size=32G',
             str(remote_encrypted),
         ]
 
