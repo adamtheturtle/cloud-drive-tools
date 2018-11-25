@@ -41,7 +41,8 @@ cloud_drive_tools_path: "/root/.local/bin/cloud-drive-tools"
 
 ## Installing
 
-Requires Python 3.5+.
+Requires Python 3.5.4+, 3.6.2+, or 3.7+.
+We require specific versions to avoid https://bugs.python.org/issue35192.
 
 This can be installed with ``pip``, or ``pipsi``.
 
