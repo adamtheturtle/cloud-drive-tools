@@ -467,7 +467,7 @@ def _mount(ctx: click.core.Context, config: Dict[str, str]) -> None:
     ]
 
     for directory in dirs_to_create:
-        # On older Python versions, this may raise a ``FileNotFoundError``.
+        # On older Python versions, this may raise a ``FileExistsError``.
         # See https://bugs.python.org/issue35192.
         directory.mkdir(parents=True, exist_ok=True)
 
