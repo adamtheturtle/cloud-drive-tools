@@ -467,9 +467,20 @@ def _mount(ctx: click.core.Context, config: Dict[str, str]) -> None:
     ]
 
     for directory in dirs_to_create:
-        # On older Python versions, this may raise a ``FileExistsError``.
+        # On older Python versions, this may raise a ``FileExistsError``
+        # erroneously.
         # See https://bugs.python.org/issue35192.
-        directory.mkdir(parents=True, exist_ok=True)
+        #
+        # However, it is also possible that two tools will be trying to make
+        # this in parallel.
+        # This is not concurrency-safe, so we ignore the error:
+        try:
+            directory.mkdir(parents=True, exist_ok=True)
+        except FileExistsError:
+            message = (
+                'Directory "{directory}" already exists and an error was '
+                'raised which we are ignoring.'
+            ).format(directory=directory)
 
     encfs_pass = str(config['encfs_pass'])
 
