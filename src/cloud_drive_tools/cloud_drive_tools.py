@@ -593,6 +593,7 @@ def _acd_cli_mount(config: Dict[str, str]) -> None:
         time.sleep(2)
 
     message = 'The acdcli mount exited cleanly'
+    LOGGER.info(message)
     unmount_lock_file.unlink()
 
 
