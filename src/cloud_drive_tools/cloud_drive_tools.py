@@ -413,7 +413,13 @@ def _sync_deletes(config: Dict[str, str]) -> None:
             )
             LOGGER.info(message)
 
-            rclone_delete_args = [str(rclone_binary), 'delete', rclone_path]
+            rclone_delete_args = [
+                str(rclone_binary),
+                '--config',
+                str(rclone_config_path),
+                'delete',
+                rclone_path,
+            ]
 
             while subprocess.run(args=rclone_delete_args).returncode != 0:
                 message = 'Delete failed, trying again in 30 seconds'
