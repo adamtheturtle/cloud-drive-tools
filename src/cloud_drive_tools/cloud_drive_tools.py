@@ -351,7 +351,7 @@ def _sync_deletes(config: Dict[str, str]) -> None:
     path_on_cloud_drive = config['path_on_cloud_drive']
 
     if not (search_dir.exists() and search_dir.is_dir()):
-        message = 'No .unionfs-fuse/ directory found, no to delete'
+        message = 'No .unionfs-fuse/ directory found, nothing to delete'
         LOGGER.info(message)
         return
 
@@ -362,6 +362,8 @@ def _sync_deletes(config: Dict[str, str]) -> None:
 
     for matched_file in matched_files:
         filename = matched_file.name
+        assert filename.endswith(hidden_flag)
+        filename = filename[:-len(hidden_flag)]
         encfsctl_args = [
             'encfsctl',
             'encode',
@@ -404,12 +406,12 @@ def _sync_deletes(config: Dict[str, str]) -> None:
         rclone_status_code = rclone_output.returncode
         if rclone_status_code:
             message = '{matched_file} is not on a cloud drive'.format(
-                matched_file=str(matched_file),
+                matched_file=str(filename),
             )
             LOGGER.info(message)
         else:
             message = '{matched_file} exists on cloud drive - deleting'.format(
-                matched_file=str(matched_file),
+                matched_file=str(filename),
             )
             LOGGER.info(message)
 
