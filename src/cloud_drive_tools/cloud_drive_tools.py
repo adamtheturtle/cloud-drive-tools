@@ -358,16 +358,16 @@ def _sync_deletes(config: Dict[str, str]) -> None:
     failed_sync_deletes = False
 
     for matched_file in matched_files:
-        filename = matched_file.name
-        assert filename.endswith(hidden_flag)
-        filename = filename[:-len(hidden_flag)]
+        hidden_relative_file_path = matched_file.relative_to(search_dir)
+        assert str(hidden_relative_file_path).endswith(hidden_flag)
+        not_hidden_relative_file = Path(str(hidden_relative_file_path)[:-len(hidden_flag)])
         encfsctl_args = [
             'encfsctl',
             'encode',
             '--extpass',
             'echo {encfs_pass}'.format(encfs_pass=encfs_pass),
             str(remote_encrypted),
-            '"{filename}"'.format(filename=filename),
+            '"{filename}"'.format(filename=not_hidden_relative_file),
         ]
 
         encfsctl_result = subprocess.run(
@@ -408,12 +408,12 @@ def _sync_deletes(config: Dict[str, str]) -> None:
         rclone_status_code = rclone_output.returncode
         if rclone_status_code:
             message = '{matched_file} is not on a cloud drive'.format(
-                matched_file=str(filename),
+                matched_file=str(not_hidden_relative_file),
             )
             LOGGER.info(message)
         else:
             message = '{matched_file} exists on cloud drive - deleting'.format(
-                matched_file=str(filename),
+                matched_file=str(not_hidden_relative_file),
             )
             LOGGER.info(message)
 
