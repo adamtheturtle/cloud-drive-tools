@@ -154,9 +154,7 @@ def _local_cleanup(config: Dict[str, str]) -> None:
 
     message = (
         'Deleting local files older than "{days_to_keep_local}" days old'
-    ).format(
-        days_to_keep_local=days_to_keep_local,
-    )
+    ).format(days_to_keep_local=days_to_keep_local)
 
     LOGGER.info(message)
 
@@ -312,14 +310,12 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
     upload_attempts = 0
 
     if children:
-        while subprocess.run(args=upload_args).returncode != 0:
+        while subprocess.run(args=upload_args, check=False).returncode != 0:
             upload_attempts += 1
             message = (
                 'Some uploads failed - uploading again after a sync '
                 'sync (attempt {upload_attempts})'
-            ).format(
-                upload_attempts=upload_attempts,
-            )
+            ).format(upload_attempts=upload_attempts)
             LOGGER.error(msg=message)
 
             if upload_attempts >= 5:
@@ -351,7 +347,7 @@ def _sync_deletes(config: Dict[str, str]) -> None:
     path_on_cloud_drive = config['path_on_cloud_drive']
 
     if not (search_dir.exists() and search_dir.is_dir()):
-        message = 'No .unionfs-fuse/ directory found, no to delete'
+        message = 'No .unionfs-fuse/ directory found, nothing to delete'
         LOGGER.info(message)
         return
 
@@ -362,6 +358,8 @@ def _sync_deletes(config: Dict[str, str]) -> None:
 
     for matched_file in matched_files:
         filename = matched_file.name
+        assert filename.endswith(hidden_flag)
+        filename = filename[:-len(hidden_flag)]
         encfsctl_args = [
             'encfsctl',
             'encode',
@@ -388,7 +386,7 @@ def _sync_deletes(config: Dict[str, str]) -> None:
         rclone_path = '{rclone_remote}:{path_on_cloud_drive}/{encname}'.format(
             rclone_remote=rclone_remote,
             path_on_cloud_drive=path_on_cloud_drive,
-            encname=encname,
+            encname=encname.decode(),
         )
 
         rclone_args = [
@@ -400,16 +398,16 @@ def _sync_deletes(config: Dict[str, str]) -> None:
             '1',
             rclone_path,
         ]
-        rclone_output = subprocess.run(args=rclone_args)
+        rclone_output = subprocess.run(args=rclone_args, check=False)
         rclone_status_code = rclone_output.returncode
         if rclone_status_code:
             message = '{matched_file} is not on a cloud drive'.format(
-                matched_file=str(matched_file),
+                matched_file=str(filename),
             )
             LOGGER.info(message)
         else:
             message = '{matched_file} exists on cloud drive - deleting'.format(
-                matched_file=str(matched_file),
+                matched_file=str(filename),
             )
             LOGGER.info(message)
 
@@ -421,7 +419,10 @@ def _sync_deletes(config: Dict[str, str]) -> None:
                 rclone_path,
             ]
 
-            while subprocess.run(args=rclone_delete_args).returncode != 0:
+            while subprocess.run(
+                args=rclone_delete_args,
+                check=False,
+            ).returncode != 0:
                 message = 'Delete failed, trying again in 30 seconds'
                 LOGGER.error(message)
                 time.sleep(30)
@@ -533,9 +534,7 @@ def _mount(ctx: click.core.Context, config: Dict[str, str]) -> None:
             ctx.fail(message)
 
         message = ('Remote mount {remote_mount} does not exist yet, waiting.'
-                   ).format(
-                       remote_mount=remote_mount,
-                   )
+                   ).format(remote_mount=remote_mount)
         LOGGER.info(message)
         time.sleep(5)
 
