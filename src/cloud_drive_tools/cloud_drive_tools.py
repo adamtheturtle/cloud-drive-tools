@@ -358,16 +358,18 @@ def _sync_deletes(config: Dict[str, str]) -> None:
     failed_sync_deletes = False
 
     for matched_file in matched_files:
-        filename = matched_file.name
-        assert filename.endswith(hidden_flag)
-        filename = filename[:-len(hidden_flag)]
+        hidden_relative_file_path = matched_file.relative_to(search_dir)
+        assert str(hidden_relative_file_path).endswith(hidden_flag)
+        not_hidden_relative_file = Path(
+            str(hidden_relative_file_path)[:-len(hidden_flag)],
+        )
         encfsctl_args = [
             'encfsctl',
             'encode',
             '--extpass',
             'echo {encfs_pass}'.format(encfs_pass=encfs_pass),
             str(remote_encrypted),
-            '"{filename}"'.format(filename=filename),
+            str(not_hidden_relative_file),
         ]
 
         encfsctl_result = subprocess.run(
@@ -376,7 +378,7 @@ def _sync_deletes(config: Dict[str, str]) -> None:
             stdout=subprocess.PIPE,
         )
 
-        encname = encfsctl_result.stdout
+        encname = encfsctl_result.stdout.decode().strip()
 
         if not encname:
             message = 'Empty name returned from encfsctl - skipping.'
@@ -387,7 +389,7 @@ def _sync_deletes(config: Dict[str, str]) -> None:
         rclone_path = '{rclone_remote}:{path_on_cloud_drive}/{encname}'.format(
             rclone_remote=rclone_remote,
             path_on_cloud_drive=path_on_cloud_drive,
-            encname=encname.decode().strip(),
+            encname=encname,
         )
 
         message = 'Attempting to delete "{rclone_path}"'.format(
@@ -404,16 +406,17 @@ def _sync_deletes(config: Dict[str, str]) -> None:
             '1',
             rclone_path,
         ]
+
         rclone_output = subprocess.run(args=rclone_args, check=False)
         rclone_status_code = rclone_output.returncode
         if rclone_status_code:
             message = '{matched_file} is not on a cloud drive'.format(
-                matched_file=str(filename),
+                matched_file=str(not_hidden_relative_file),
             )
             LOGGER.info(message)
         else:
             message = '{matched_file} exists on cloud drive - deleting'.format(
-                matched_file=str(filename),
+                matched_file=str(not_hidden_relative_file),
             )
             LOGGER.info(message)
 
