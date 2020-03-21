@@ -390,7 +390,7 @@ def _sync_deletes(config: Dict[str, str]) -> None:
         rclone_path = '{rclone_remote}:{path_on_cloud_drive}/{encname}'.format(
             rclone_remote=rclone_remote,
             path_on_cloud_drive=path_on_cloud_drive,
-            encname=encname,
+            encname=encname.decode(),
         )
 
         rclone_args = [
