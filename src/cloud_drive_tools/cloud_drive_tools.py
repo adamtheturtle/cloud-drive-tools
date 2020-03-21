@@ -390,6 +390,11 @@ def _sync_deletes(config: Dict[str, str]) -> None:
             encname=encname.decode(),
         )
 
+        message = 'Attempting to delete "{rclone_path}"'.format(
+            rclone_path=rclone_path,
+        )
+        LOGGER.info(message)
+
         rclone_args = [
             str(rclone_binary),
             '--config',
