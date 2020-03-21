@@ -98,7 +98,8 @@ def _validate_config(
 
     allowed_keys = {*required_keys, *optional_keys}
 
-    config = yaml.load(Path(str(value)).read_text()) or {}
+    config_text = Path(str(value)).read_text()
+    config = yaml.load(config_text, Loader=yaml.FullLoader) or {}
 
     missing_required_keys = required_keys - config.keys()
     extra_keys = config.keys() - allowed_keys
@@ -386,8 +387,13 @@ def _sync_deletes(config: Dict[str, str]) -> None:
         rclone_path = '{rclone_remote}:{path_on_cloud_drive}/{encname}'.format(
             rclone_remote=rclone_remote,
             path_on_cloud_drive=path_on_cloud_drive,
-            encname=encname.decode(),
+            encname=encname.decode().strip(),
         )
+
+        message = 'Attempting to delete "{rclone_path}"'.format(
+            rclone_path=rclone_path,
+        )
+        LOGGER.info(message)
 
         rclone_args = [
             str(rclone_binary),
