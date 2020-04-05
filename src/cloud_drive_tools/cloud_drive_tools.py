@@ -315,7 +315,7 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
             upload_attempts += 1
             message = (
                 'Some uploads failed - uploading again after a sync '
-                'sync (attempt {upload_attempts})'
+                '(attempt {upload_attempts})'
             ).format(upload_attempts=upload_attempts)
             LOGGER.error(msg=message)
 
