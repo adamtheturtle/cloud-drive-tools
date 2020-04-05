@@ -309,6 +309,7 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
 
     children = str(local_encrypted.glob('*'))
     upload_attempts = 0
+    max_upload_attempts = 10
 
     if children:
         while subprocess.run(args=upload_args, check=False).returncode != 0:
@@ -319,8 +320,10 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
             ).format(upload_attempts=upload_attempts)
             LOGGER.error(msg=message)
 
-            if upload_attempts >= 5:
-                message = 'Upload failed 5 times - giving up'
+            if upload_attempts >= max_upload_attempts:
+                message = (
+                    'Upload failed {upload_attempts} times - giving up'
+                ).format(upload_attempts=upload_attempts)
                 ctx.fail(message=message)
     else:
         message = '{local_encrypted} is empty - nothing to upload'.format(
