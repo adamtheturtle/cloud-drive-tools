@@ -385,9 +385,7 @@ def _sync_deletes(config: Dict[str, str]) -> None:
         rclone_output = subprocess.run(args=rclone_args, check=False)
         rclone_status_code = rclone_output.returncode
         if rclone_status_code:
-            message = (
-                f'{not_hidden_relative_file} is not on a cloud drive'
-            )
+            message = f'{not_hidden_relative_file} is not on a cloud drive'
             LOGGER.info(message)
         else:
             message = (
