@@ -286,7 +286,7 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
 
     upload_args += [
         str(local_encrypted),
-        f'{rclone_remote}:{path_on_cloud_drive}'
+        f'{rclone_remote}:{path_on_cloud_drive}',
     ]
 
     children = str(local_encrypted.glob('*'))
