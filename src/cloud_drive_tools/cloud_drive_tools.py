@@ -38,12 +38,6 @@ def _pre_command_setup(
         'Require a version of Python with a fix for '
         'https://bugs.python.org/issue35192'
     )
-    if sys.version_info.major == 3:
-        assert sys.version_info.minor >= 5, message
-
-    if sys.version_info.major == 3 and sys.version_info.minor == 5:
-        assert sys.version_info.micro >= 4, message
-
     if sys.version_info.major == 3 and sys.version_info.minor == 6:
         assert sys.version_info.micro >= 2, message
 
@@ -61,10 +55,7 @@ def _pre_command_setup(
     )
     for dependency in dependencies:
         if shutil.which(str(dependency)) is None:
-            message = '"{dependency}" is not available on the PATH.'.format(
-                dependency=dependency,
-            )
-
+            message = f'"{dependency}" is not available on the PATH.'
             ctx.fail(message=message)
 
 
@@ -151,8 +142,8 @@ def _local_cleanup(config: Dict[str, str]) -> None:
     local_decrypted = mount_base / 'local-decrypted'
 
     message = (
-        'Deleting local files older than "{days_to_keep_local}" days old'
-    ).format(days_to_keep_local=days_to_keep_local)
+        f'Deleting local files older than "{days_to_keep_local}" days old'
+    )
 
     LOGGER.info(message)
 
@@ -186,13 +177,11 @@ def _unmount(mountpoint: Path) -> None:
     This does not work on macOS as ``fusermount`` does not exist.
     """
     if not _is_mountpoint(name=str(mountpoint)):
-        message = 'Cannot unmount "{mountpoint}" - it is not mounted'.format(
-            mountpoint=str(mountpoint),
-        )
+        message = f'Cannot unmount "{mountpoint}" - it is not mounted'
         LOGGER.warning(msg=message)
         return
 
-    message = 'Unmounting "{mountpoint}"'.format(mountpoint=str(mountpoint))
+    message = f'Unmounting "{mountpoint}"'
     LOGGER.info(msg=message)
     unmount_args = ['fusermount', '-u', str(mountpoint)]
     subprocess.run(args=unmount_args, check=True)
@@ -270,7 +259,7 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
         'encfsctl',
         'encode',
         '--extpass',
-        'echo {encfs_pass}'.format(encfs_pass=encfs_pass),
+        f'echo {encfs_pass}',
         str(remote_encrypted),
         '.unionfs-fuse',
     ]
@@ -290,17 +279,11 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
         'copy',
     ]
     if exclude_name:
-        upload_args += [
-            '--exclude',
-            '/{exclude_name}/*'.format(exclude_name=exclude_name),
-        ]
+        upload_args += ['--exclude', f'/{exclude_name}/*']
 
     upload_args += [
         str(local_encrypted),
-        '{rclone_remote}:{path_on_cloud_drive}'.format(
-            rclone_remote=rclone_remote,
-            path_on_cloud_drive=path_on_cloud_drive,
-        ),
+        f'{rclone_remote}:{path_on_cloud_drive}',
     ]
 
     children = str(local_encrypted.glob('*'))
@@ -312,19 +295,15 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
             upload_attempts += 1
             message = (
                 'Some uploads failed - uploading again after a sync '
-                '(attempt {upload_attempts})'
-            ).format(upload_attempts=upload_attempts)
+                f'(attempt {upload_attempts})'
+            )
             LOGGER.error(msg=message)
 
             if upload_attempts >= max_upload_attempts:
-                message = (
-                    'Upload failed {upload_attempts} times - giving up'
-                ).format(upload_attempts=upload_attempts)
+                message = f'Upload failed {upload_attempts} times - giving up'
                 ctx.fail(message=message)
     else:
-        message = '{local_encrypted} is empty - nothing to upload'.format(
-            local_encrypted=str(local_encrypted),
-        )
+        message = f'{local_encrypted} is empty - nothing to upload'
         LOGGER.info(msg=message)
 
     message = 'Upload Complete - Syncing changes'
@@ -366,7 +345,7 @@ def _sync_deletes(config: Dict[str, str]) -> None:
             'encfsctl',
             'encode',
             '--extpass',
-            'echo {encfs_pass}'.format(encfs_pass=encfs_pass),
+            f'echo {encfs_pass}',
             str(remote_encrypted),
             str(not_hidden_relative_file),
         ]
@@ -385,15 +364,9 @@ def _sync_deletes(config: Dict[str, str]) -> None:
             failed_sync_deletes = True
             continue
 
-        rclone_path = '{rclone_remote}:{path_on_cloud_drive}/{encname}'.format(
-            rclone_remote=rclone_remote,
-            path_on_cloud_drive=path_on_cloud_drive,
-            encname=encname,
-        )
+        rclone_path = f'{rclone_remote}:{path_on_cloud_drive}/{encname}'
 
-        message = 'Attempting to delete "{rclone_path}"'.format(
-            rclone_path=rclone_path,
-        )
+        message = f'Attempting to delete "{rclone_path}"'
         LOGGER.info(message)
 
         rclone_args = [
@@ -409,13 +382,11 @@ def _sync_deletes(config: Dict[str, str]) -> None:
         rclone_output = subprocess.run(args=rclone_args, check=False)
         rclone_status_code = rclone_output.returncode
         if rclone_status_code:
-            message = '{matched_file} is not on a cloud drive'.format(
-                matched_file=str(not_hidden_relative_file),
-            )
+            message = f'{not_hidden_relative_file} is not on a cloud drive'
             LOGGER.info(message)
         else:
-            message = '{matched_file} exists on cloud drive - deleting'.format(
-                matched_file=str(not_hidden_relative_file),
+            message = (
+                f'{not_hidden_relative_file} exists on cloud drive - deleting'
             )
             LOGGER.info(message)
 
@@ -435,9 +406,7 @@ def _sync_deletes(config: Dict[str, str]) -> None:
                 LOGGER.error(message)
                 time.sleep(30)
 
-            message = '{matched_file} deleted from cloud drive'.format(
-                matched_file=str(matched_file),
-            )
+            message = f'{matched_file} deleted from cloud drive'
             LOGGER.info(message)
 
         # Remove the UnionFS hidden object.
@@ -496,9 +465,9 @@ def _mount(ctx: click.core.Context, config: Dict[str, str]) -> None:
             directory.mkdir(parents=True, exist_ok=True)
         except FileExistsError:
             message = (
-                'Directory "{directory}" already exists and an error was '
+                f'Directory "{directory}" already exists and an error was '
                 'raised which we are ignoring.'
-            ).format(directory=directory)
+            )
 
     encfs_pass = str(config['encfs_pass'])
 
@@ -514,7 +483,7 @@ def _mount(ctx: click.core.Context, config: Dict[str, str]) -> None:
     config_file_path.write_text(config_contents)
     pid = os.getpid()
     screen_log_dir = Path('/var/log')
-    screen_log_filename = 'cloud-drive-tools-screenlog.{pid}'.format(pid=pid)
+    screen_log_filename = f'cloud-drive-tools-screenlog.{pid}'
     screen_log_path = screen_log_dir / screen_log_filename
 
     screen_args = [
@@ -541,8 +510,7 @@ def _mount(ctx: click.core.Context, config: Dict[str, str]) -> None:
             message = 'Remote mount not found after 5 attempts, exiting'
             ctx.fail(message)
 
-        message = ('Remote mount {remote_mount} does not exist yet, waiting.'
-                   ).format(remote_mount=remote_mount)
+        message = f'Remote mount {remote_mount} does not exist yet, waiting.'
         LOGGER.info(message)
         time.sleep(5)
 
@@ -551,7 +519,7 @@ def _mount(ctx: click.core.Context, config: Dict[str, str]) -> None:
     encfs_args = [
         'encfs',
         '--extpass',
-        'echo {encfs_pass}'.format(encfs_pass=encfs_pass),
+        f'echo {encfs_pass}',
         '--reverse',
         str(local_decrypted),
         str(local_encrypted),
@@ -563,7 +531,7 @@ def _mount(ctx: click.core.Context, config: Dict[str, str]) -> None:
     encfs_args = [
         'encfs',
         '--extpass',
-        'echo {encfs_pass}'.format(encfs_pass=encfs_pass),
+        f'echo {encfs_pass}',
         remote_mount,
         str(remote_decrypted),
     ]
@@ -575,10 +543,7 @@ def _mount(ctx: click.core.Context, config: Dict[str, str]) -> None:
         'unionfs-fuse',
         '-o',
         'cow,allow_other',
-        '{local_decrypted}=RW:{remote_decrypted}=RO'.format(
-            local_decrypted=str(local_decrypted),
-            remote_decrypted=str(remote_decrypted),
-        ),
+        f'{local_decrypted}=RW:{remote_decrypted}=RO',
         str(data_dir),
     ]
     subprocess.run(args=unionfs_fuse_args, check=True)
