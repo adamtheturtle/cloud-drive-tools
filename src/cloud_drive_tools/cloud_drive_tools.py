@@ -246,6 +246,7 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
 
     rclone_binary = Path(config['rclone'])
     rclone_config_path = Path(config['rclone_config_path'])
+    rclone_remote = config['rclone_remote']
 
     upload_pid_file = Path(__file__).parent / 'upload.pid'
     if upload_pid_file.exists():
@@ -261,8 +262,6 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
     current_pid = os.getpid()
     upload_pid_file.write_text(str(current_pid))
     _sync_deletes(config=config)
-
-    rclone_remote = 'Google'
 
     mount_base = Path(config['mount_base'])
     remote_encrypted = mount_base / 'acd-encrypted'
