@@ -320,7 +320,7 @@ def _sync_deletes(config: Dict[str, str]) -> None:
 
     rclone_binary = Path(config['rclone'])
     rclone_config_path = Path(config['rclone_config_path'])
-    rclone_remote = 'Google'
+    rclone_remote = config['rclone_remote']
 
     encfs_pass = str(config['encfs_pass'])
     path_on_cloud_drive = config['path_on_cloud_drive']
