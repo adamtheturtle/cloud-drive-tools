@@ -12,7 +12,6 @@ Set up a YAML file `vars.yaml` with the following keys:
 * `encfs_pass`
 * `mount_base`
 * `path_on_cloud_drive`
-* `plexdrive`
 * `rclone`
 * `rclone_remote`
 
@@ -32,7 +31,6 @@ encfs6_config: "/home/encfs6.xml"
 encfs_pass: "XXX"
 mount_base: "/home/.mounts"
 path_on_cloud_drive: "/Media"
-plexdrive: "/home/plexdrive"
 rclone: "/home/rclone-v1.37-linux-amd64/rclone"
 rclone_config_path: "/root/.config/rclone/rclone.conf"
 rclone_remote: "Google"
