@@ -575,8 +575,8 @@ def _acd_cli_mount(config: Dict[str, str]) -> None:
     unmount_lock_file = Path(__file__).parent / 'unmount.acd'
     mount_base = Path(config['mount_base'])
     remote_encrypted = mount_base / 'acd-encrypted'
-    plexdrive_binary = Path(config['plexdrive'])
     rclone_binary = Path(config['rclone'])
+    rclone_remote = config['rclone_remote']
 
     while not unmount_lock_file.exists():
         message = 'Running cloud storage mount in the foreground'
@@ -585,11 +585,14 @@ def _acd_cli_mount(config: Dict[str, str]) -> None:
         mount_args = [
             str(rclone_binary),
             'mount',
-            '-o',
-            'allow_other,read_only',
-            '-v',
-            '2',
-            str(remote_encrypted),
+            f'{rclone_remote}:{remote_encrypted}',
+            '--allow-other',
+            '--read-only',
+            '--umask="000"',
+            '-vv',
+            '--fast-list',
+            '--dir-cache-time',
+            '24h',
         ]
 
         subprocess.run(args=mount_args, check=True)
