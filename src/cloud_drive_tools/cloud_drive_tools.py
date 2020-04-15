@@ -45,11 +45,9 @@ def _pre_command_setup(
     os.environ['ENCFS6_CONFIG'] = encfs6_config
 
     rclone_binary = Path(config['rclone'])
-    plexdrive_binary = Path(config['plexdrive'])
 
     dependencies = (
         rclone_binary,
-        plexdrive_binary,
         'unionfs-fuse',
         'encfs',
         'fusermount',
@@ -79,7 +77,6 @@ def _validate_config(
             'encfs_pass',
             'mount_base',
             'path_on_cloud_drive',
-            'plexdrive',
             'rclone',
             'rclone_config_path',
             'rclone_remote',
@@ -578,23 +575,27 @@ def _acd_cli_mount(config: Dict[str, str]) -> None:
     unmount_lock_file = Path(__file__).parent / 'unmount.acd'
     mount_base = Path(config['mount_base'])
     remote_encrypted = mount_base / 'acd-encrypted'
-    plexdrive_binary = Path(config['plexdrive'])
+    rclone_binary = Path(config['rclone'])
+    rclone_remote = config['rclone_remote']
 
     while not unmount_lock_file.exists():
         message = 'Running cloud storage mount in the foreground'
         LOGGER.info(message)
         _unmount(mountpoint=remote_encrypted)
-        plexdrive_args = [
-            str(plexdrive_binary),
+        mount_args = [
+            str(rclone_binary),
             'mount',
-            '-o',
-            'allow_other,read_only',
-            '-v',
-            '2',
-            str(remote_encrypted),
+            f'{rclone_remote}:{remote_encrypted}',
+            '--allow-other',
+            '--read-only',
+            '--umask="000"',
+            '-vv',
+            '--fast-list',
+            '--dir-cache-time',
+            '24h',
         ]
 
-        subprocess.run(args=plexdrive_args, check=True)
+        subprocess.run(args=mount_args, check=True)
 
         message = (
             'Cloud storage mount exited - checking if to remount in a couple '
