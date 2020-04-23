@@ -382,6 +382,8 @@ def _sync_deletes(config: Dict[str, str]) -> None:
         rclone_output = subprocess.run(args=rclone_args, check=False)
         rclone_status_code = rclone_output.returncode
         if rclone_status_code:
+            # This may be shown for each file in a directory if a directory is
+            # deleted.
             message = f'{not_hidden_relative_file} is not on a cloud drive'
             LOGGER.info(message)
         else:
@@ -394,7 +396,9 @@ def _sync_deletes(config: Dict[str, str]) -> None:
                 str(rclone_binary),
                 '--config',
                 str(rclone_config_path),
-                'delete',
+                # We use purge rather than delete because ``rclone delete``
+                # does not delete directories, only their contents.
+                'purge',
                 rclone_path,
             ]
 
