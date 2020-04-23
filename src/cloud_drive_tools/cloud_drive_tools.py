@@ -37,7 +37,7 @@ def _encode_with_encfs(
         '--extpass',
         f'echo {encfs_pass}',
         str(root_dir),
-        str(file_path),
+        str(file_path_or_name),
     ]
 
     encfsctl_result = subprocess.run(
