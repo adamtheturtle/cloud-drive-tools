@@ -23,6 +23,33 @@ LOGGER = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
+def _encode_with_encfs(
+    encfs_pass: str,
+    file_path_or_name: Path,
+    root_dir: Path,
+) -> str:
+    """
+    Return the encfs encoded file path.
+    """
+    encfsctl_args = [
+        'encfsctl',
+        'encode',
+        '--extpass',
+        f'echo {encfs_pass}',
+        str(root_dir),
+        str(file_path),
+    ]
+
+    encfsctl_result = subprocess.run(
+        args=encfsctl_args,
+        check=True,
+        stdout=subprocess.PIPE,
+    )
+
+    encname = encfsctl_result.stdout.decode().strip()
+    return encname
+
+
 @click.group(name='cloud-drive-tools')
 def cloud_drive_tools() -> None:
     """
@@ -255,21 +282,11 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
     path_on_cloud_drive = config['path_on_cloud_drive']
 
     # Determine the .unionfs-fuse directory name as to not upload it
-    exclude_name_args = [
-        'encfsctl',
-        'encode',
-        '--extpass',
-        f'echo {encfs_pass}',
-        str(remote_encrypted),
-        '.unionfs-fuse',
-    ]
-
-    exclude_name_result = subprocess.run(
-        args=exclude_name_args,
-        check=True,
-        stdout=subprocess.PIPE,
+    exclude_name = _encode_with_encfs(
+        encfs_pass=encfs_pass,
+        root_dir=remote_encrypted,
+        file_path_or_name=Path('.unionfs-fuse'),
     )
-    exclude_name = exclude_name_result.stdout.decode()
 
     upload_args = [
         str(rclone_binary),
@@ -341,22 +358,11 @@ def _sync_deletes(config: Dict[str, str]) -> None:
         not_hidden_relative_file = Path(
             str(hidden_relative_file_path)[:-len(hidden_flag)],
         )
-        encfsctl_args = [
-            'encfsctl',
-            'encode',
-            '--extpass',
-            f'echo {encfs_pass}',
-            str(remote_encrypted),
-            str(not_hidden_relative_file),
-        ]
-
-        encfsctl_result = subprocess.run(
-            args=encfsctl_args,
-            check=True,
-            stdout=subprocess.PIPE,
+        encname = _encode_with_encfs(
+            encfs_pass=encfs_pass,
+            root_dir=remote_encrypted,
+            file_path_or_name=not_hidden_relative_file,
         )
-
-        encname = encfsctl_result.stdout.decode().strip()
 
         if not encname:
             message = 'Empty name returned from encfsctl - skipping.'
