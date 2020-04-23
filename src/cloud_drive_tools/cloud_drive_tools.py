@@ -353,6 +353,9 @@ def _sync_deletes(config: Dict[str, str]) -> None:
     failed_sync_deletes = False
 
     for matched_file in matched_files:
+        message = f'Matched file to delete is "{matched_file}"'
+        LOGGER.info(message)
+
         if not matched_file.exists():
             message = (
                 f'No such file or directory {matched_file}. '
