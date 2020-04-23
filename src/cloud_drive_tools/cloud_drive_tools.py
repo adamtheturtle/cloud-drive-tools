@@ -353,6 +353,15 @@ def _sync_deletes(config: Dict[str, str]) -> None:
     failed_sync_deletes = False
 
     for matched_file in matched_files:
+        if not matched_file.exists():
+            message = (
+                f'No such file or directory {matched_file}. '
+                'It may be the case that this is a file or directory in a '
+                'directory which has already been deleted.'
+            )
+            LOGGER.info(message)
+            continue
+
         hidden_relative_file_path = matched_file.relative_to(search_dir)
         assert str(hidden_relative_file_path).endswith(hidden_flag)
         not_hidden_relative_file = Path(
