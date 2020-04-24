@@ -615,6 +615,57 @@ def _acd_cli_mount(config: Dict[str, str]) -> None:
     unmount_lock_file.unlink()
 
 
+def _encode_with_encfs(
+    encfs_pass: str,
+    path_or_file_name: str,
+    root_dir: Path,
+) -> str:
+    """
+    Return an encfs encoded path.
+    """
+    encfsctl_args = [
+        'encfsctl',
+        'encode',
+        '--extpass',
+        f'echo {encfs_pass}',
+        str(root_dir),
+        path_or_file_name,
+    ]
+
+    encfsctl_result = subprocess.run(
+        args=encfsctl_args,
+        check=True,
+        stdout=subprocess.PIPE,
+    )
+
+    encname = encfsctl_result.stdout.decode().strip()
+    return encname
+
+
+@click.command('show-encoded-path')
+@config_option
+@click.argument('decoded-path')
+@click.pass_context
+def show_encoded_path(
+    ctx: click.core.Context,
+    config: Dict[str, str],
+    decoded_path: str,
+) -> None:
+    """
+    Show the encfs encoded path given a decoded file path or name.
+    """
+    _pre_command_setup(ctx=ctx, config=config)
+    encfs_pass = config['encfs_pass']
+    mount_base = Path(config['mount_base'])
+    remote_encrypted = mount_base / 'acd-encrypted'
+    encoded_path = _encode_with_encfs(
+        path_or_file_name=decoded_path,
+        encfs_pass=encfs_pass,
+        root_dir=remote_encrypted,
+    )
+    click.echo(encoded_path)
+
+
 @click.command('acd-cli-mount')
 @config_option
 @click.pass_context
