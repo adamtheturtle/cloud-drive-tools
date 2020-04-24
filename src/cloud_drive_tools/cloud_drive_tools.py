@@ -392,13 +392,18 @@ def _sync_deletes(config: Dict[str, str]) -> None:
             )
             LOGGER.info(message)
 
+            if matched_file.is_file():
+                delete_cmd = 'delete'
+            else:
+                # We use purge rather than delete because ``rclone delete``
+                # does not delete directories, only their contents.
+                delete_cmd = 'purge'
+
             rclone_delete_args = [
                 str(rclone_binary),
                 '--config',
                 str(rclone_config_path),
-                # We use purge rather than delete because ``rclone delete``
-                # does not delete directories, only their contents.
-                'purge',
+                delete_cmd,
                 rclone_path,
             ]
 
