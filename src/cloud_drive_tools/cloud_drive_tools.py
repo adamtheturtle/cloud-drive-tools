@@ -315,22 +315,11 @@ def _sync_deletes(config: Dict[str, str]) -> None:
         not_hidden_relative_file = Path(
             str(hidden_relative_file_path)[:-len(hidden_flag)],
         )
-        encfsctl_args = [
-            'encfsctl',
-            'encode',
-            '--extpass',
-            f'echo {encfs_pass}',
-            str(remote_encrypted),
-            str(not_hidden_relative_file),
-        ]
-
-        encfsctl_result = subprocess.run(
-            args=encfsctl_args,
-            check=True,
-            stdout=subprocess.PIPE,
+        encname = _encode_with_encfs(
+            path_or_file_name=str(not_hidden_relative_file),
+            encfs_pass=encfs_pass,
+            root_dir=remote_encrypted,
         )
-
-        encname = encfsctl_result.stdout.decode().strip()
 
         if not encname:
             message = 'Empty name returned from encfsctl - skipping.'
