@@ -255,7 +255,6 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
     path_on_cloud_drive = config['path_on_cloud_drive']
 
     # Determine the .unionfs-fuse directory name as to not upload it
-    path_to_exclude = '.unionfs-fuse'
     exclude_name = _encode_with_encfs(
         path_or_file_name='.unionfs-fuse',
         encfs_pass=encfs_pass,
