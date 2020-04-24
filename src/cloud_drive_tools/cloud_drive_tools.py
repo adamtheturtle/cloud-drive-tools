@@ -19,41 +19,16 @@ from typing import Callable, Dict, Optional, Union
 import click
 import yaml
 
+from ._encfs import encode_with_encfs
+
 LOGGER = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
-
-
-def _encode_with_encfs(
-    encfs_pass: str,
-    file_path_or_name: Path,
-    root_dir: Path,
-) -> str:
-    """
-    Return the encfs encoded file path.
-    """
-    encfsctl_args = [
-        'encfsctl',
-        'encode',
-        '--extpass',
-        f'echo {encfs_pass}',
-        str(root_dir),
-        str(file_path_or_name),
-    ]
-
-    encfsctl_result = subprocess.run(
-        args=encfsctl_args,
-        check=True,
-        stdout=subprocess.PIPE,
-    )
-
-    encname = encfsctl_result.stdout.decode().strip()
-    return encname
 
 
 def _file_exists(
     rclone_binary: Path,
     rclone_config_path: Path,
-    rclone_path: Path,
+    rclone_path: str,
 ) -> bool:
     """
     Return whether an file exists given an rclone path.
@@ -307,7 +282,7 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
     path_on_cloud_drive = config['path_on_cloud_drive']
 
     # Determine the .unionfs-fuse directory name as to not upload it
-    exclude_name = _encode_with_encfs(
+    exclude_name = encode_with_encfs(
         encfs_pass=encfs_pass,
         root_dir=remote_encrypted,
         file_path_or_name=Path('.unionfs-fuse'),
@@ -385,7 +360,7 @@ def _sync_deletes(config: Dict[str, str]) -> None:
         not_hidden_relative_file = Path(
             str(hidden_relative_file_path)[:-len(hidden_flag)],
         )
-        encname = _encode_with_encfs(
+        encname = encode_with_encfs(
             encfs_pass=encfs_pass,
             root_dir=remote_encrypted,
             file_path_or_name=not_hidden_relative_file,
