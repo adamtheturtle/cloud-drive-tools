@@ -50,6 +50,31 @@ def _encode_with_encfs(
     return encname
 
 
+def _file_exists(
+    rclone_binary: Path,
+    rclone_config_path: Path,
+    rclone_path: Path,
+) -> bool:
+    """
+    Return whether an file exists given an rclone path.
+    """
+    rclone_args = [
+        str(rclone_binary),
+        '--config',
+        str(rclone_config_path),
+        'ls',
+        '--max-depth',
+        '1',
+        rclone_path,
+    ]
+
+    rclone_output = subprocess.run(args=rclone_args, check=False)
+    rclone_status_code = rclone_output.returncode
+
+    file_exists = not bool(rclone_status_code)
+    return file_exists
+
+
 @click.group(name='cloud-drive-tools')
 def cloud_drive_tools() -> None:
     """
@@ -355,16 +380,6 @@ def _sync_deletes(config: Dict[str, str]) -> None:
     for matched_file in matched_files:
         message = f'Matched file to delete is "{matched_file}"'
         LOGGER.info(message)
-
-        if not matched_file.exists():
-            message = (
-                f'No such file or directory {matched_file}. '
-                'It may be the case that this is a file or directory in a '
-                'directory which has already been deleted.'
-            )
-            LOGGER.info(message)
-            continue
-
         hidden_relative_file_path = matched_file.relative_to(search_dir)
         assert str(hidden_relative_file_path).endswith(hidden_flag)
         not_hidden_relative_file = Path(
@@ -386,20 +401,13 @@ def _sync_deletes(config: Dict[str, str]) -> None:
 
         message = f'Attempting to delete "{rclone_path}"'
         LOGGER.info(message)
+        file_exists = _file_exists(
+            rclone_path=rclone_path,
+            rclone_binary=rclone_binary,
+            rclone_config_path=rclone_config_path,
+        )
 
-        rclone_args = [
-            str(rclone_binary),
-            '--config',
-            str(rclone_config_path),
-            'ls',
-            '--max-depth',
-            '1',
-            rclone_path,
-        ]
-
-        rclone_output = subprocess.run(args=rclone_args, check=False)
-        rclone_status_code = rclone_output.returncode
-        if rclone_status_code:
+        if not file_exists:
             # This may be shown for each file in a directory if a directory is
             # deleted.
             message = f'{not_hidden_relative_file} is not on a cloud drive'
