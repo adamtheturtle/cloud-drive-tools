@@ -287,21 +287,8 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
     ]
 
     children = str(local_encrypted.glob('*'))
-    upload_attempts = 0
-    max_upload_attempts = 10
-
     if children:
-        while subprocess.run(args=upload_args, check=False).returncode != 0:
-            upload_attempts += 1
-            message = (
-                'Some uploads failed - uploading again after a sync '
-                f'(attempt {upload_attempts})'
-            )
-            LOGGER.error(msg=message)
-
-            if upload_attempts >= max_upload_attempts:
-                message = f'Upload failed {upload_attempts} times - giving up'
-                ctx.fail(message=message)
+        subprocess.run(args=upload_args, check=True)
     else:
         message = f'{local_encrypted} is empty - nothing to upload'
         LOGGER.info(msg=message)
@@ -407,14 +394,7 @@ def _sync_deletes(config: Dict[str, str]) -> None:
                 rclone_path,
             ]
 
-            while subprocess.run(
-                args=rclone_delete_args,
-                check=False,
-            ).returncode != 0:
-                message = 'Delete failed, trying again in 30 seconds'
-                LOGGER.error(message)
-                time.sleep(30)
-
+            subprocess.run(args=rclone_delete_args, check=True)
             message = f'{matched_file} deleted from cloud drive'
             LOGGER.info(message)
 
