@@ -255,21 +255,11 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
     path_on_cloud_drive = config['path_on_cloud_drive']
 
     # Determine the .unionfs-fuse directory name as to not upload it
-    exclude_name_args = [
-        'encfsctl',
-        'encode',
-        '--extpass',
-        f'echo {encfs_pass}',
-        str(remote_encrypted),
-        '.unionfs-fuse',
-    ]
-
-    exclude_name_result = subprocess.run(
-        args=exclude_name_args,
-        check=True,
-        stdout=subprocess.PIPE,
+    exclude_name = _encode_with_encfs(
+        path_or_file_name='.unionfs-fuse',
+        encfs_pass=encfs_pass,
+        root_dir=remote_encrypted,
     )
-    exclude_name = exclude_name_result.stdout.decode()
 
     upload_args = [
         str(rclone_binary),
@@ -277,11 +267,8 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
         str(rclone_config_path),
         '-v',
         'copy',
-    ]
-    if exclude_name:
-        upload_args += ['--exclude', f'/{exclude_name}/*']
-
-    upload_args += [
+        '--exclude',
+        f'/{exclude_name}/*',
         str(local_encrypted),
         f'{rclone_remote}:{path_on_cloud_drive}',
     ]
