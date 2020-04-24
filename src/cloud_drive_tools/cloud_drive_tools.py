@@ -687,6 +687,7 @@ cloud_drive_tools.add_command(mount)
 cloud_drive_tools.add_command(sync_deletes)
 cloud_drive_tools.add_command(unmount_all)
 cloud_drive_tools.add_command(upload)
+cloud_drive_tools.add_command(show_encoded_path)
 
 if __name__ == '__main__':
     cloud_drive_tools()
