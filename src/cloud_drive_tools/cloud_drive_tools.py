@@ -659,6 +659,7 @@ def move_file_or_dir(
     rclone_binary = Path(config['rclone'])
     rclone_config_path = Path(config['rclone_config_path'])
     rclone_remote = config['rclone_remote']
+    path_on_cloud_drive = config['path_on_cloud_drive']
 
     move_args = [
         str(rclone_binary),
@@ -666,8 +667,8 @@ def move_file_or_dir(
         str(rclone_config_path),
         '-v',
         'moveto',
-        f'{rclone_remote}:{encoded_src_path}',
-        f'{rclone_remote}:{encoded_dst_path}',
+        f'{rclone_remote}:{path_on_cloud_drive}/{encoded_src_path}',
+        f'{rclone_remote}:{path_on_cloud_drive}/{encoded_dst_path}',
     ]
     subprocess.run(args=move_args, check=True)
 
@@ -687,6 +688,7 @@ def mkdir(
     _pre_command_setup(ctx=ctx, config=config)
     encfs_pass = config['encfs_pass']
     mount_base = Path(config['mount_base'])
+    path_on_cloud_drive = config['path_on_cloud_drive']
     remote_encrypted = mount_base / 'acd-encrypted'
     encoded_path = _encode_with_encfs(
         path_or_file_name=path,
@@ -704,7 +706,7 @@ def mkdir(
         str(rclone_config_path),
         '-v',
         'mkdir',
-        f'{rclone_remote}:{encoded_path}',
+        f'{rclone_remote}:{path_on_cloud_drive}/{encoded_path}',
     ]
     subprocess.run(args=move_args, check=True)
 
