@@ -672,6 +672,43 @@ def move_file_or_dir(
     subprocess.run(args=move_args, check=True)
 
 
+@click.command('mkdir')
+@config_option
+@click.argument('path')
+@click.pass_context
+def mkdir(
+    ctx: click.core.Context,
+    config: Dict[str, str],
+    path: str,
+) -> None:
+    """
+    Create a directory.
+    """
+    _pre_command_setup(ctx=ctx, config=config)
+    encfs_pass = config['encfs_pass']
+    mount_base = Path(config['mount_base'])
+    remote_encrypted = mount_base / 'acd-encrypted'
+    encoded_path = _encode_with_encfs(
+        path_or_file_name=path,
+        encfs_pass=encfs_pass,
+        root_dir=remote_encrypted,
+    )
+
+    rclone_binary = Path(config['rclone'])
+    rclone_config_path = Path(config['rclone_config_path'])
+    rclone_remote = config['rclone_remote']
+
+    move_args = [
+        str(rclone_binary),
+        '--config',
+        str(rclone_config_path),
+        '-v',
+        'mkdir',
+        f'{rclone_remote}:{encoded_path}',
+    ]
+    subprocess.run(args=move_args, check=True)
+
+
 @click.command('acd-cli-mount')
 @config_option
 @click.pass_context
@@ -690,6 +727,7 @@ cloud_drive_tools.add_command(unmount_all)
 cloud_drive_tools.add_command(upload)
 cloud_drive_tools.add_command(show_encoded_path)
 cloud_drive_tools.add_command(move_file_or_dir)
+cloud_drive_tools.add_command(mkdir)
 
 if __name__ == '__main__':
     cloud_drive_tools()
