@@ -627,6 +627,51 @@ def show_encoded_path(
     click.echo(encoded_path)
 
 
+@click.command('move-file-or-dir')
+@config_option
+@click.argument('src')
+@click.argument('dst')
+@click.pass_context
+def move_file_or_dir(
+    ctx: click.core.Context,
+    config: Dict[str, str],
+    src: str,
+    dst: str,
+) -> None:
+    """
+    Move a file from source to destination.
+    """
+    _pre_command_setup(ctx=ctx, config=config)
+    encfs_pass = config['encfs_pass']
+    mount_base = Path(config['mount_base'])
+    remote_encrypted = mount_base / 'acd-encrypted'
+    encoded_src_path = _encode_with_encfs(
+        path_or_file_name=src,
+        encfs_pass=encfs_pass,
+        root_dir=remote_encrypted,
+    )
+    encoded_dst_path = _encode_with_encfs(
+        path_or_file_name=dst,
+        encfs_pass=encfs_pass,
+        root_dir=remote_encrypted,
+    )
+
+    rclone_binary = Path(config['rclone'])
+    rclone_config_path = Path(config['rclone_config_path'])
+    rclone_remote = config['rclone_remote']
+
+    move_args = [
+        str(rclone_binary),
+        '--config',
+        str(rclone_config_path),
+        '-v',
+        'moveto',
+        f'{rclone_remote}:{encoded_src_path}',
+        f'{rclone_remote}:{encoded_dst_path}',
+    ]
+    subprocess.run(args=move_args, check=True)
+
+
 @click.command('acd-cli-mount')
 @config_option
 @click.pass_context
@@ -644,6 +689,7 @@ cloud_drive_tools.add_command(sync_deletes)
 cloud_drive_tools.add_command(unmount_all)
 cloud_drive_tools.add_command(upload)
 cloud_drive_tools.add_command(show_encoded_path)
+cloud_drive_tools.add_command(move_file_or_dir)
 
 if __name__ == '__main__':
     cloud_drive_tools()
