@@ -103,9 +103,7 @@ def _validate_config(
             'rclone_verbose',
         ],
     )
-    optional_keys = set(['http_proxy', 'https_proxy'])
-
-    allowed_keys = {*required_keys, *optional_keys}
+    allowed_keys = required_keys
 
     config_text = Path(str(value)).read_text()
     config = yaml.load(config_text, Loader=yaml.FullLoader) or {}
