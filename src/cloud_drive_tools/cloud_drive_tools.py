@@ -79,7 +79,22 @@ def _pre_command_setup(
             ctx.fail(message=message)
 
 
-def _validate_config(
+class _Config:
+
+    def __init__(
+        self,
+        cloud_drive_tools_path: Path,
+        data_dir: Path,
+        days_to_keep_local: float,
+        encfs6_config: Path,
+        encfs_pass: str,
+        mount_base: Path,
+        path_on_cloud_drive: str,
+        rclone: str
+    ):
+        pass
+
+def _get_config(
     ctx: click.core.Context,
     param: Union[click.core.Option, click.core.Parameter],
     value: Optional[Union[int, bool, str]],
@@ -144,7 +159,7 @@ def config_option(command: Callable[..., None]) -> Callable[..., None]:
         '--config',
         '-c',
         type=click.Path(exists=True),
-        callback=_validate_config,
+        callback=_get_config,
         default=str(default_config_path),
         help='The path to a file including configuration YAML.',
     )(command)  # type: Callable[..., None]

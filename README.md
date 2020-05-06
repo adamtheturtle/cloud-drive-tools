@@ -25,6 +25,7 @@ The optional values currently do nothing.
 For example:
 
 ```yaml
+cloud_drive_tools_path: "/root/.local/bin/cloud-drive-tools"
 data_dir: "/home/data"
 days_to_keep_local: 14
 encfs6_config: "/home/encfs6.xml"
@@ -37,7 +38,6 @@ rclone_remote: "Google"
 # With verbose set to true, we can see which particular Google error is
 # occurring on a transfer.
 rclone_verbose: true
-cloud_drive_tools_path: "/root/.local/bin/cloud-drive-tools"
 ```
 
 ## Installing
