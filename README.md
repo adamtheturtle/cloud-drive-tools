@@ -15,13 +15,6 @@ Set up a YAML file `vars.yaml` with the following keys:
 * `rclone`
 * `rclone_remote`
 
-and optionally:
-
-* `http_proxy`
-* `https_proxy`
-
-The optional values currently do nothing.
-
 For example:
 
 ```yaml
