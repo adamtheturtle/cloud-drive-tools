@@ -80,7 +80,6 @@ def _pre_command_setup(
 
 
 class _Config:
-
     def __init__(
         self,
         cloud_drive_tools_path: Path,
@@ -94,13 +93,26 @@ class _Config:
         rclone_config_path: Path,
         rclone_remote: str,
     ):
-        pass
+        """
+        XXX
+        """
+        self.cloud_drive_tools_path = cloud_drive_tools_path
+        self.data_dir = data_dir
+        self.days_to_keep_local = days_to_keep_local
+        self.encfs6_config = encfs6_config
+        self.encfs_pass = encfs_pass
+        self.mount_base = mount_base
+        self.path_on_cloud_drive = path_on_cloud_drive
+        self.rclone = rclone
+        self.rclone_config_path = rclone_config_path
+        self.rclone_remote = rclone_remote
+
 
 def _get_config(
     ctx: click.core.Context,
     param: Union[click.core.Option, click.core.Parameter],
     value: Optional[Union[int, bool, str]],
-) -> Dict[str, str]:
+) -> _Config:
     # We "use" variables to satisfy linting tools.
     for _ in (ctx, param):
         pass
@@ -148,7 +160,18 @@ def _get_config(
         )
         raise click.BadParameter(message)
 
-    return config
+    return _Config(
+        cloud_drive_tools_path=Path(config['cloud_drive_tools_path']),
+        data_dir=Path(config['data_dir']),
+        days_to_keep_local=float(config['days_to_keep_local']),
+        encfs6_config=Path(config['encfs6_config']),
+        encfs_pass=str(config['encfs_pass']),
+        mount_base=Path(config['mount_base']),
+        path_on_cloud_drive=str(config['path_on_cloud_drive']),
+        rclone=Path(config['rclone']),
+        rclone_config_path=Path(config['rclone_config_path']),
+        rclone_remote=str(config['rclone_remote']),
+    )
 
 
 def config_option(command: Callable[..., None]) -> Callable[..., None]:
