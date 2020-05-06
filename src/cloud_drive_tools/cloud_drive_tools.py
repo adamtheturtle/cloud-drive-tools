@@ -142,7 +142,7 @@ def _local_cleanup(config: Dict[str, str]) -> None:
     local_decrypted = mount_base / 'local-decrypted'
 
     message = (
-        f'Deleting local files older than "{days_to_keep_local}" days old'
+        f'Deleting local files older than "{days_to_keep_local}" days old.'
     )
 
     LOGGER.info(message)
@@ -158,6 +158,13 @@ def _local_cleanup(config: Dict[str, str]) -> None:
         ctime = path.stat().st_ctime
         if path.is_file() and ctime < oldest_acceptable_time:
             path.unlink()
+
+    message = (
+        f'Finished deleting local files older than "{days_to_keep_local}" '
+        'days old.'
+    )
+
+    LOGGER.info(message)
 
 
 def _is_mountpoint(name: str) -> bool:
