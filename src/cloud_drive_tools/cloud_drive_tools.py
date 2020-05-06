@@ -30,6 +30,12 @@ def cloud_drive_tools() -> None:
     """
 
 
+def _rclone_verbosity_flag(verbose: bool) -> str:
+    if verbose:
+        return '-vv'
+    return '-v'
+
+
 def _rclone_path(
     rclone_remote: str,
     rclone_root: str,
@@ -94,11 +100,10 @@ def _validate_config(
             'rclone',
             'rclone_config_path',
             'rclone_remote',
+            'rclone_verbose',
         ],
     )
-    optional_keys = set(['http_proxy', 'https_proxy'])
-
-    allowed_keys = {*required_keys, *optional_keys}
+    allowed_keys = required_keys
 
     config_text = Path(str(value)).read_text()
     config = yaml.load(config_text, Loader=yaml.FullLoader) or {}

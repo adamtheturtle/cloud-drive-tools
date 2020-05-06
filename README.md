@@ -34,6 +34,9 @@ path_on_cloud_drive: "/Media"
 rclone: "/home/rclone-v1.37-linux-amd64/rclone"
 rclone_config_path: "/root/.config/rclone/rclone.conf"
 rclone_remote: "Google"
+# With verbose set to true, we can see which particular Google error is
+# occurring on a transfer.
+rclone_verbose: true
 cloud_drive_tools_path: "/root/.local/bin/cloud-drive-tools"
 ```
 
