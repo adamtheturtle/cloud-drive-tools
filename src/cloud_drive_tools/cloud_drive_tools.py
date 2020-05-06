@@ -29,6 +29,7 @@ def cloud_drive_tools() -> None:
     Manage Plex tools.
     """
 
+
 def _rclone_path(
     rclone_remote: str,
     rclone_root: str,
@@ -38,9 +39,9 @@ def _rclone_path(
     Return the ``rclone`` path to use.
     """
     if rclone_relative_path is None:
-        return f'{rclone_remote}:{rclone_root}',
+        return f'{rclone_remote}:{rclone_root}'
 
-    return f'{rclone_remote}:{rclone_root}/{encname}'
+    return f'{rclone_remote}:{rclone_root}/{rclone_relative_path}'
 
 
 def _pre_command_setup(
@@ -296,7 +297,7 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
             rclone_remote=rclone_remote,
             rclone_root=path_on_cloud_drive,
             rclone_relative_path=None,
-        )
+        ),
     ]
 
     children = str(local_encrypted.glob('*'))
