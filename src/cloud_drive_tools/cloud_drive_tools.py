@@ -30,6 +30,20 @@ def cloud_drive_tools() -> None:
     """
 
 
+def _rclone_path(
+    rclone_remote: str,
+    rclone_root: str,
+    rclone_relative_path: Optional[str],
+) -> str:
+    """
+    Return the ``rclone`` path to use.
+    """
+    if rclone_relative_path is None:
+        return f'{rclone_remote}:{rclone_root}'
+
+    return f'{rclone_remote}:{rclone_root}/{rclone_relative_path}'
+
+
 def _pre_command_setup(
     ctx: click.core.Context,
     config: Dict[str, str],
@@ -279,7 +293,11 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
         '--exclude',
         f'/{exclude_name}/*',
         str(local_encrypted),
-        f'{rclone_remote}:{path_on_cloud_drive}',
+        _rclone_path(
+            rclone_remote=rclone_remote,
+            rclone_root=path_on_cloud_drive,
+            rclone_relative_path=None,
+        ),
     ]
 
     children = str(local_encrypted.glob('*'))
@@ -336,7 +354,11 @@ def _sync_deletes(config: Dict[str, str]) -> None:
             failed_sync_deletes = True
             continue
 
-        rclone_path = f'{rclone_remote}:{path_on_cloud_drive}/{encname}'
+        rclone_path = _rclone_path(
+            rclone_remote=rclone_remote,
+            rclone_root=path_on_cloud_drive,
+            rclone_relative_path=encname,
+        )
 
         message = f'Attempting to delete "{rclone_path}"'
         LOGGER.info(message)
@@ -551,6 +573,11 @@ def _acd_cli_mount(config: Dict[str, str]) -> None:
     remote_encrypted = mount_base / 'acd-encrypted'
     rclone_binary = Path(config['rclone'])
     rclone_remote = config['rclone_remote']
+    rclone_path = _rclone_path(
+        rclone_remote=rclone_remote,
+        rclone_root='/',
+        rclone_relative_path=None,
+    )
 
     while not unmount_lock_file.exists():
         message = 'Running cloud storage mount in the foreground'
@@ -559,7 +586,7 @@ def _acd_cli_mount(config: Dict[str, str]) -> None:
         mount_args = [
             str(rclone_binary),
             'mount',
-            f'{rclone_remote}:/',
+            rclone_path,
             str(remote_encrypted),
             '--allow-other',
             '--read-only',
@@ -670,14 +697,25 @@ def move_file_or_dir(
     rclone_remote = config['rclone_remote']
     path_on_cloud_drive = config['path_on_cloud_drive']
 
+    rclone_src_path = _rclone_path(
+        rclone_remote=rclone_remote,
+        rclone_root=path_on_cloud_drive,
+        rclone_relative_path=encoded_src_path,
+    )
+    rclone_dst_path = _rclone_path(
+        rclone_remote=rclone_remote,
+        rclone_root=path_on_cloud_drive,
+        rclone_relative_path=encoded_dst_path,
+    )
+
     move_args = [
         str(rclone_binary),
         '--config',
         str(rclone_config_path),
         '-v',
         'moveto',
-        f'{rclone_remote}:{path_on_cloud_drive}/{encoded_src_path}',
-        f'{rclone_remote}:{path_on_cloud_drive}/{encoded_dst_path}',
+        rclone_src_path,
+        rclone_dst_path,
     ]
     subprocess.run(args=move_args, check=True)
 
@@ -709,13 +747,19 @@ def mkdir(
     rclone_config_path = Path(config['rclone_config_path'])
     rclone_remote = config['rclone_remote']
 
+    rclone_path = _rclone_path(
+        rclone_remote=rclone_remote,
+        rclone_root=path_on_cloud_drive,
+        rclone_relative_path=encoded_path,
+    )
+
     move_args = [
         str(rclone_binary),
         '--config',
         str(rclone_config_path),
         '-v',
         'mkdir',
-        f'{rclone_remote}:{path_on_cloud_drive}/{encoded_path}',
+        rclone_path,
     ]
     subprocess.run(args=move_args, check=True)
 
