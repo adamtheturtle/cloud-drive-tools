@@ -272,7 +272,9 @@ def upload(ctx: click.core.Context, config: Dict[str, str]) -> None:
         str(rclone_binary),
         '--config',
         str(rclone_config_path),
-        '-v',
+        # With only one ``-v`` we cannot see which Google error is returned in
+        # case there is one.
+        '-vv',
         'copy',
         '--exclude',
         f'/{exclude_name}/*',
