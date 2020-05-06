@@ -38,7 +38,7 @@ class _Config:
         rclone_remote: str,
     ):
         """
-        XXX
+        Configuration for cloud drive tools.
         """
         self.cloud_drive_tools_path = cloud_drive_tools_path
         self.data_dir = data_dir
@@ -60,6 +60,9 @@ def cloud_drive_tools() -> None:
 
 
 def _rclone_verbosity_flag(verbose: bool) -> str:
+    """
+    Verbosity flag to use with ``rclone``.
+    """
     if verbose:
         return '-vv'
     return '-v'
