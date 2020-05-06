@@ -193,17 +193,16 @@ def _local_cleanup(config: _Config) -> None:
     Delete local data older than "days_to_keep_local" from the configuration
     file.
     """
-    days_to_keep_local = float(config['days_to_keep_local'])
-    mount_base = Path(config['mount_base'])
-    local_decrypted = mount_base / 'local-decrypted'
+    local_decrypted = config.mount_base / 'local-decrypted'
 
     message = (
-        f'Deleting local files older than "{days_to_keep_local}" days old.'
+        f'Deleting local files older than "{config.days_to_keep_local}" days '
+        'old.'
     )
 
     LOGGER.info(message)
 
-    seconds_to_keep_local = days_to_keep_local * 24 * 60 * 60
+    seconds_to_keep_local = config.days_to_keep_local * 24 * 60 * 60
 
     file_paths = local_decrypted.rglob('*')
 
@@ -216,8 +215,8 @@ def _local_cleanup(config: _Config) -> None:
             path.unlink()
 
     message = (
-        f'Finished deleting local files older than "{days_to_keep_local}" '
-        'days old.'
+        'Finished deleting local files older than'
+        f'"{config.days_to_keep_local}" days old.'
     )
 
     LOGGER.info(message)
@@ -254,14 +253,12 @@ def _unmount_all(config: _Config) -> None:
     message = 'Unmounting all ACDTools mountpoints'
     LOGGER.info(message)
 
-    data_dir = Path(config['data_dir'])
-    mount_base = Path(config['mount_base'])
-    remote_encrypted = mount_base / 'acd-encrypted'
-    remote_decrypted = mount_base / 'acd-decrypted'
-    local_encrypted = mount_base / 'local-encrypted'
+    remote_encrypted = config.mount_base / 'acd-encrypted'
+    remote_decrypted = config.mount_base / 'acd-decrypted'
+    local_encrypted = config.mount_base / 'local-encrypted'
     unmount_lock_file = Path(__file__).parent / 'unmount.acd'
 
-    _unmount(mountpoint=data_dir)
+    _unmount(mountpoint=config.data_dir)
     unmount_lock_file.touch()
     _unmount(mountpoint=remote_encrypted)
     time.sleep(6)
@@ -293,9 +290,8 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
     """
     _pre_command_setup(ctx=ctx, config=config)
 
-    rclone_binary = Path(config['rclone'])
-    rclone_config_path = Path(config['rclone_config_path'])
-    rclone_remote = config['rclone_remote']
+    remote_encrypted = config.mount_base / 'acd-encrypted'
+    local_encrypted = config.mount_base / 'local-encrypted'
 
     upload_pid_file = Path(__file__).parent / 'upload.pid'
     if upload_pid_file.exists():
@@ -307,27 +303,21 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
                 LOGGER.error(msg=message)
                 ctx.fail(message=message)
 
-    encfs_pass = str(config['encfs_pass'])
     current_pid = os.getpid()
     upload_pid_file.write_text(str(current_pid))
     _sync_deletes(config=config)
 
-    mount_base = Path(config['mount_base'])
-    remote_encrypted = mount_base / 'acd-encrypted'
-    local_encrypted = mount_base / 'local-encrypted'
-    path_on_cloud_drive = config['path_on_cloud_drive']
-
     # Determine the .unionfs-fuse directory name as to not upload it
     exclude_name = _encode_with_encfs(
         path_or_file_name='.unionfs-fuse',
-        encfs_pass=encfs_pass,
+        encfs_pass=config.encfs_pass,
         root_dir=remote_encrypted,
     )
 
     upload_args = [
-        str(rclone_binary),
+        str(config.rclone),
         '--config',
-        str(rclone_config_path),
+        str(config.rclone_config_path),
         # With only one ``-v`` we cannot see which Google error is returned in
         # case there is one.
         '-vv',
@@ -336,8 +326,8 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
         f'/{exclude_name}/*',
         str(local_encrypted),
         _rclone_path(
-            rclone_remote=rclone_remote,
-            rclone_root=path_on_cloud_drive,
+            rclone_remote=config.rclone_remote,
+            rclone_root=config.path_on_cloud_drive,
             rclone_relative_path=None,
         ),
     ]
@@ -356,17 +346,9 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
 
 
 def _sync_deletes(config: _Config) -> None:
-    mount_base = Path(config['mount_base'])
-    remote_encrypted = mount_base / 'acd-encrypted'
-    local_decrypted = mount_base / 'local-decrypted'
+    remote_encrypted = config.mount_base / 'acd-encrypted'
+    local_decrypted = config.mount_base / 'local-decrypted'
     search_dir = local_decrypted / '.unionfs-fuse'
-
-    rclone_binary = Path(config['rclone'])
-    rclone_config_path = Path(config['rclone_config_path'])
-    rclone_remote = config['rclone_remote']
-
-    encfs_pass = str(config['encfs_pass'])
-    path_on_cloud_drive = config['path_on_cloud_drive']
 
     if not (search_dir.exists() and search_dir.is_dir()):
         message = 'No .unionfs-fuse/ directory found, nothing to delete'
@@ -386,7 +368,7 @@ def _sync_deletes(config: _Config) -> None:
         )
         encname = _encode_with_encfs(
             path_or_file_name=str(not_hidden_relative_file),
-            encfs_pass=encfs_pass,
+            encfs_pass=config.encfs_pass,
             root_dir=remote_encrypted,
         )
 
@@ -397,8 +379,8 @@ def _sync_deletes(config: _Config) -> None:
             continue
 
         rclone_path = _rclone_path(
-            rclone_remote=rclone_remote,
-            rclone_root=path_on_cloud_drive,
+            rclone_remote=config.rclone_remote,
+            rclone_root=config.path_on_cloud_drive,
             rclone_relative_path=encname,
         )
 
@@ -406,9 +388,9 @@ def _sync_deletes(config: _Config) -> None:
         LOGGER.info(message)
 
         rclone_args = [
-            str(rclone_binary),
+            str(config.rclone),
             '--config',
-            str(rclone_config_path),
+            str(config.rclone_config_path),
             'ls',
             '--max-depth',
             '1',
@@ -436,9 +418,9 @@ def _sync_deletes(config: _Config) -> None:
                 delete_cmd = 'purge'
 
             rclone_delete_args = [
-                str(rclone_binary),
+                str(config.rclone),
                 '--config',
-                str(rclone_config_path),
+                str(config.rclone_config_path),
                 delete_cmd,
                 rclone_path,
             ]
