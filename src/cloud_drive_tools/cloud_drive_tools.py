@@ -326,6 +326,9 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
         str(config.rclone_config_path),
         _rclone_verbosity_flag(verbose=config.rclone_verbose),
         'copy',
+        # Try to avoid Google 403: User Rate Limit Exceeded.
+        '--tpslimit',
+        '5',
         '--exclude',
         f'/{exclude_name}/*',
         str(local_encrypted),
