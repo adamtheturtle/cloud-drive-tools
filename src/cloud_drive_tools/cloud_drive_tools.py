@@ -36,6 +36,7 @@ class _Config:
         rclone: Path,
         rclone_config_path: Path,
         rclone_remote: str,
+        rclone_verbose: bool,
     ):
         """
         Configuration for cloud drive tools.
@@ -50,6 +51,7 @@ class _Config:
         self.rclone = rclone
         self.rclone_config_path = rclone_config_path
         self.rclone_remote = rclone_remote
+        self.rclone_verbose = rclone_verbose
 
 
 @click.group(name='cloud-drive-tools')
@@ -171,6 +173,7 @@ def _get_config(
         rclone=Path(config['rclone']),
         rclone_config_path=Path(config['rclone_config_path']),
         rclone_remote=str(config['rclone_remote']),
+        rclone_verbose=bool(config['rclone_verbose']),
     )
 
 
@@ -321,9 +324,7 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
         str(config.rclone),
         '--config',
         str(config.rclone_config_path),
-        # With only one ``-v`` we cannot see which Google error is returned in
-        # case there is one.
-        '-vv',
+        _rclone_verbosity_flag(verbose=config.rclone_verbose),
         'copy',
         '--exclude',
         f'/{exclude_name}/*',
@@ -394,6 +395,7 @@ def _sync_deletes(config: _Config) -> None:
             str(config.rclone),
             '--config',
             str(config.rclone_config_path),
+            _rclone_verbosity_flag(verbose=config.rclone_verbose),
             'ls',
             '--max-depth',
             '1',
@@ -424,6 +426,7 @@ def _sync_deletes(config: _Config) -> None:
                 str(config.rclone),
                 '--config',
                 str(config.rclone_config_path),
+                _rclone_verbosity_flag(verbose=config.rclone_verbose),
                 delete_cmd,
                 rclone_path,
             ]
@@ -610,7 +613,7 @@ def _acd_cli_mount(config: _Config) -> None:
             '--read-only',
             '--umask',
             '000',
-            '-vv',
+            _rclone_verbosity_flag(verbose=config.rclone_verbose),
             '--fast-list',
             '--dir-cache-time',
             '24h',
@@ -721,7 +724,7 @@ def move_file_or_dir(
         str(config.rclone),
         '--config',
         str(config.rclone_config_path),
-        '-v',
+        _rclone_verbosity_flag(verbose=config.rclone_verbose),
         'moveto',
         rclone_src_path,
         rclone_dst_path,
@@ -759,7 +762,7 @@ def mkdir(
         str(config.rclone),
         '--config',
         str(config.rclone_config_path),
-        '-v',
+        _rclone_verbosity_flag(verbose=config.rclone_verbose),
         'mkdir',
         rclone_path,
     ]
