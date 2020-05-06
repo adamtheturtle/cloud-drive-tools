@@ -64,14 +64,14 @@ autoflake:
 	    --expand-star-imports \
 	    .
 
+# We do not use pip-missing-reqs or pip-extra-reqs as these are currently not
+# working: https://github.com/r1chardj0n3s/pip-check-reqs/issues/24
 .PHONY: lint
 lint: \
     check-manifest \
     flake8 \
     isort \
     mypy \
-    pip-extra-reqs \
-    pip-missing-reqs \
     pydocstyle \
     pylint \
     vulture \
