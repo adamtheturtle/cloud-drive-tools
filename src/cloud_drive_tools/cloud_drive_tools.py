@@ -90,7 +90,9 @@ class _Config:
         encfs_pass: str,
         mount_base: Path,
         path_on_cloud_drive: str,
-        rclone: str
+        rclone: Path,
+        rclone_config_path: Path,
+        rclone_remote: str,
     ):
         pass
 
