@@ -598,7 +598,7 @@ def mount(
     _mount(ctx=ctx, config=config)
 
 
-def _acd_cli_mount(config: _Config) -> None:
+def _mount_cloud_storage(config: _Config) -> None:
     unmount_lock_file = Path(__file__).parent / 'unmount.acd'
     rclone_path = _rclone_path(
         rclone_remote=config.rclone_remote,
@@ -634,7 +634,7 @@ def _acd_cli_mount(config: _Config) -> None:
         LOGGER.info(message)
         time.sleep(2)
 
-    message = 'The acdcli mount exited cleanly'
+    message = 'The cloud drive mount exited cleanly'
     LOGGER.info(message)
     unmount_lock_file.unlink()
 
@@ -780,7 +780,7 @@ def acd_cli_mount(ctx: click.core.Context, config: _Config) -> None:
     Foreground mount which will keep remounting until unmount file exists.
     """
     _pre_command_setup(ctx=ctx, config=config)
-    _acd_cli_mount(config=config)
+    _mount_cloud_storage(config=config)
 
 
 cloud_drive_tools.add_command(acd_cli_mount)
