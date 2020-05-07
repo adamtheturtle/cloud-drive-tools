@@ -274,20 +274,26 @@ def _unmount(mountpoint: Path) -> None:
     subprocess.run(args=unmount_args, check=True)
 
 
-def _unmount_all(config: _Config) -> None:
+def _unmount_all(
+    data_dir: Path,
+    remote_encrypted: Path,
+    unmount_lock_file: Path,
+    local_encrypted: Path,
+    remote_decrypted: Path,
+) -> None:
     message = 'Unmounting all Cloud Drive Tools mountpoints'
     LOGGER.info(message)
 
-    _unmount(mountpoint=config.data_dir)
-    config.unmount_lock_file.touch()
-    _unmount(mountpoint=config.remote_encrypted)
+    _unmount(mountpoint=data_dir)
+    unmount_lock_file.touch()
+    _unmount(mountpoint=remote_encrypted)
     time.sleep(6)
     try:
-        config.unmount_lock_file.unlink()
+        unmount_lock_file.unlink()
     except FileNotFoundError:
         pass
-    _unmount(mountpoint=config.remote_decrypted)
-    _unmount(mountpoint=config.local_encrypted)
+    _unmount(mountpoint=remote_decrypted)
+    _unmount(mountpoint=local_encrypted)
 
 
 @click.command('unmount')
@@ -298,7 +304,13 @@ def unmount_all(ctx: click.core.Context, config: _Config) -> None:
     Unmount all mountpoints associated with Cloud Drive Tools.
     """
     _pre_command_setup(ctx=ctx, config=config)
-    _unmount_all(config=config)
+    _unmount_all(
+        data_dir=config.data_dir,
+        remote_encrypted=config.remote_encrypted,
+        unmount_lock_file=config.unmount_lock_file,
+        local_encrypted=config.local_encrypted,
+        remote_decrypted=config.remote_decrypted,
+    )
 
 
 @click.command('upload')
@@ -635,7 +647,13 @@ def mount(
     """
     _pre_command_setup(ctx=ctx, config=config)
     if not no_unmount:
-        _unmount_all(config=config)
+        _unmount_all(
+            data_dir=config.data_dir,
+            remote_encrypted=config.remote_encrypted,
+            unmount_lock_file=config.unmount_lock_file,
+            local_encrypted=config.local_encrypted,
+            remote_decrypted=config.remote_decrypted,
+        )
 
     _mount(
         ctx=ctx,
