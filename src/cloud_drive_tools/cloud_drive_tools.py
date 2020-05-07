@@ -1027,16 +1027,16 @@ def check_config(ctx: click.core.Context, config: _Config) -> None:
     )
 
 
-cloud_drive_tools.add_command(mount_cloud_storage)
+cloud_drive_tools.add_command(check_config)
+cloud_drive_tools.add_command(mkdir)
 cloud_drive_tools.add_command(mount)
+cloud_drive_tools.add_command(mount_cloud_storage)
+cloud_drive_tools.add_command(move_file_or_dir)
+cloud_drive_tools.add_command(show_decoded_path)
+cloud_drive_tools.add_command(show_encoded_path)
 cloud_drive_tools.add_command(sync_deletes)
 cloud_drive_tools.add_command(unmount_all)
 cloud_drive_tools.add_command(upload)
-cloud_drive_tools.add_command(show_decoded_path)
-cloud_drive_tools.add_command(show_encoded_path)
-cloud_drive_tools.add_command(move_file_or_dir)
-cloud_drive_tools.add_command(mkdir)
-cloud_drive_tools.add_command(check_config)
 
 if __name__ == '__main__':
     cloud_drive_tools()
