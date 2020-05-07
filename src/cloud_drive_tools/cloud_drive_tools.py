@@ -52,8 +52,8 @@ class _Config:
         self.rclone_remote = rclone_remote
         self.rclone_verbose = rclone_verbose
         self.mount_base = mount_base
-        self.remote_encrypted = mount_base / 'acd-encrypted'
-        self.remote_decrypted = mount_base / 'acd-decrypted'
+        self.remote_encrypted = mount_base / 'cloud-drive-encrypted'
+        self.remote_decrypted = mount_base / 'cloud-drive-decrypted'
         self.local_encrypted = mount_base / 'local-encrypted'
         self.local_decrypted = mount_base / 'local-decrypted'
         unmount_lock_file_name = 'cloud-drive-tools-unmount.lock'
@@ -587,7 +587,7 @@ def _mount(
         '-S',
         'cloud-drive-tools-mount',
         str(cloud_drive_tools_path),
-        'acd-cli-mount',
+        'cloud-drive-mount',
         '-c',
         str(config_file_path),
     ]
@@ -876,10 +876,10 @@ def mkdir(
     subprocess.run(args=move_args, check=True)
 
 
-@click.command('acd-cli-mount')
+@click.command('cloud-drive-mount')
 @config_option
 @click.pass_context
-def acd_cli_mount(ctx: click.core.Context, config: _Config) -> None:
+def mount_cloud_storage(ctx: click.core.Context, config: _Config) -> None:
     """
     Foreground mount which will keep remounting until unmount file exists.
     """
@@ -897,7 +897,7 @@ def acd_cli_mount(ctx: click.core.Context, config: _Config) -> None:
     )
 
 
-cloud_drive_tools.add_command(acd_cli_mount)
+cloud_drive_tools.add_command(mount_cloud_storage)
 cloud_drive_tools.add_command(mount)
 cloud_drive_tools.add_command(sync_deletes)
 cloud_drive_tools.add_command(unmount_all)
