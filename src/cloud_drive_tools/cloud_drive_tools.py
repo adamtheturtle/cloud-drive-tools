@@ -273,7 +273,7 @@ def _unmount(mountpoint: Path) -> None:
 
 
 def _unmount_all(config: _Config) -> None:
-    message = 'Unmounting all ACDTools mountpoints'
+    message = 'Unmounting all Cloud Drive Tools mountpoints'
     LOGGER.info(message)
 
     unmount_lock_file = Path(__file__).parent / 'unmount.acd'
@@ -295,7 +295,7 @@ def _unmount_all(config: _Config) -> None:
 @click.pass_context
 def unmount_all(ctx: click.core.Context, config: _Config) -> None:
     """
-    Unmount all mountpoints associated with ACDTools.
+    Unmount all mountpoints associated with Cloud Drive Tools.
     """
     _pre_command_setup(ctx=ctx, config=config)
     _unmount_all(config=config)
