@@ -695,6 +695,40 @@ def mount(
     )
 
 
+@click.command('mount-data-dir')
+@config_option
+@click.pass_context
+def mount_data_dir(
+    ctx: click.core.Context,
+    config: _Config,
+    no_unmount: bool,
+) -> None:
+    """
+    Mount the data directory.
+    """
+    _pre_command_setup(
+        ctx=ctx,
+        encfs6_config=config.encfs6_config,
+        rclone=config.rclone,
+    )
+
+    _wait_for_remote_mount(
+        ctx=ctx,
+        remote_encrypted=config.remote_encrypted,
+        path_on_cloud_drive=config.path_on_cloud_drive,
+    )
+
+    _mount_data_dir(
+        remote_encrypted=config.remote_encrypted,
+        remote_decrypted=config.remote_decrypted,
+        local_encrypted=config.local_encrypted,
+        local_decrypted=config.local_decrypted,
+        data_dir=config.data_dir,
+        encfs_pass=config.encfs_pass,
+        path_on_cloud_drive=config.path_on_cloud_drive,
+    )
+
+
 def _mount_cloud_storage(
     rclone_remote: str,
     unmount_lock_file: Path,
@@ -1056,6 +1090,7 @@ cloud_drive_tools.add_command(check_config)
 cloud_drive_tools.add_command(mkdir)
 cloud_drive_tools.add_command(mount)
 cloud_drive_tools.add_command(mount_cloud_storage)
+cloud_drive_tools.add_command(mount_data_dir)
 cloud_drive_tools.add_command(move_file_or_dir)
 cloud_drive_tools.add_command(show_decoded_path)
 cloud_drive_tools.add_command(show_encoded_path)
