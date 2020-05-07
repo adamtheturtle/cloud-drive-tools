@@ -350,7 +350,7 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
         ),
     ]
 
-    children = str(config.local_encrypted.glob('*'))
+    children = config.local_encrypted.glob('*')
     if children:
         subprocess.run(args=upload_args, check=True)
     else:
