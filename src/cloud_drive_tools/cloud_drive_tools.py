@@ -56,6 +56,8 @@ class _Config:
         self.remote_decrypted = mount_base / 'acd-decrypted'
         self.local_encrypted = mount_base / 'local-encrypted'
         self.local_decrypted = mount_base / 'local-decrypted'
+        unmount_lock_file_name = 'cloud-drive-tools-unmount.lock'
+        self.unmount_lock_file = Path(__file__).parent / unmount_lock_file_name
 
     def as_dict(self) -> Dict[str, Union[str, float, bool]]:
         return {
@@ -105,7 +107,8 @@ def _rclone_path(
 
 def _pre_command_setup(
     ctx: click.core.Context,
-    config: _Config,
+    encfs6_config: Path,
+    rclone: Path,
 ) -> None:
     message = (
         'Require a version of Python with a fix for '
@@ -114,10 +117,10 @@ def _pre_command_setup(
     if sys.version_info.major == 3 and sys.version_info.minor == 6:
         assert sys.version_info.micro >= 2, message
 
-    os.environ['ENCFS6_CONFIG'] = str(config.encfs6_config)
+    os.environ['ENCFS6_CONFIG'] = str(encfs6_config)
 
     dependencies = (
-        str(config.rclone),
+        str(rclone),
         'unionfs-fuse',
         'encfs',
         'fusermount',
@@ -213,21 +216,20 @@ def config_option(command: Callable[..., None]) -> Callable[..., None]:
     return function
 
 
-def _local_cleanup(config: _Config) -> None:
+def _local_cleanup(days_to_keep_local: float, local_decrypted: Path) -> None:
     """
     Delete local data older than "days_to_keep_local" from the configuration
     file.
     """
     message = (
-        f'Deleting local files older than "{config.days_to_keep_local}" days '
-        'old.'
+        f'Deleting local files older than "{days_to_keep_local}" days old.'
     )
 
     LOGGER.info(message)
 
-    seconds_to_keep_local = config.days_to_keep_local * 24 * 60 * 60
+    seconds_to_keep_local = days_to_keep_local * 24 * 60 * 60
 
-    file_paths = config.local_decrypted.rglob('*')
+    file_paths = local_decrypted.rglob('*')
 
     now_timestamp = datetime.datetime.now().timestamp()
     oldest_acceptable_time = now_timestamp - seconds_to_keep_local
@@ -238,8 +240,8 @@ def _local_cleanup(config: _Config) -> None:
             path.unlink()
 
     message = (
-        'Finished deleting local files older than'
-        f'"{config.days_to_keep_local}" days old.'
+        f'Finished deleting local files older than "{days_to_keep_local}" '
+        'days old.'
     )
 
     LOGGER.info(message)
@@ -272,22 +274,26 @@ def _unmount(mountpoint: Path) -> None:
     subprocess.run(args=unmount_args, check=True)
 
 
-def _unmount_all(config: _Config) -> None:
-    message = 'Unmounting all ACDTools mountpoints'
+def _unmount_all(
+    data_dir: Path,
+    remote_encrypted: Path,
+    unmount_lock_file: Path,
+    local_encrypted: Path,
+    remote_decrypted: Path,
+) -> None:
+    message = 'Unmounting all Cloud Drive Tools mountpoints'
     LOGGER.info(message)
 
-    unmount_lock_file = Path(__file__).parent / 'unmount.acd'
-
-    _unmount(mountpoint=config.data_dir)
+    _unmount(mountpoint=data_dir)
     unmount_lock_file.touch()
-    _unmount(mountpoint=config.remote_encrypted)
+    _unmount(mountpoint=remote_encrypted)
     time.sleep(6)
     try:
         unmount_lock_file.unlink()
     except FileNotFoundError:
         pass
-    _unmount(mountpoint=config.remote_decrypted)
-    _unmount(mountpoint=config.local_encrypted)
+    _unmount(mountpoint=remote_decrypted)
+    _unmount(mountpoint=local_encrypted)
 
 
 @click.command('unmount')
@@ -295,10 +301,20 @@ def _unmount_all(config: _Config) -> None:
 @click.pass_context
 def unmount_all(ctx: click.core.Context, config: _Config) -> None:
     """
-    Unmount all mountpoints associated with ACDTools.
+    Unmount all mountpoints associated with Cloud Drive Tools.
     """
-    _pre_command_setup(ctx=ctx, config=config)
-    _unmount_all(config=config)
+    _pre_command_setup(
+        ctx=ctx,
+        encfs6_config=config.encfs6_config,
+        rclone=config.rclone,
+    )
+    _unmount_all(
+        data_dir=config.data_dir,
+        remote_encrypted=config.remote_encrypted,
+        unmount_lock_file=config.unmount_lock_file,
+        local_encrypted=config.local_encrypted,
+        remote_decrypted=config.remote_decrypted,
+    )
 
 
 @click.command('upload')
@@ -308,7 +324,11 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
     """
     Upload local data to the cloud.
     """
-    _pre_command_setup(ctx=ctx, config=config)
+    _pre_command_setup(
+        ctx=ctx,
+        encfs6_config=config.encfs6_config,
+        rclone=config.rclone,
+    )
 
     upload_pid_file = Path(__file__).parent / 'upload.pid'
     if upload_pid_file.exists():
@@ -322,7 +342,16 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
 
     current_pid = os.getpid()
     upload_pid_file.write_text(str(current_pid))
-    _sync_deletes(config=config)
+    _sync_deletes(
+        local_decrypted=config.local_decrypted,
+        encfs_pass=config.encfs_pass,
+        remote_encrypted=config.remote_encrypted,
+        rclone_remote=config.rclone_remote,
+        path_on_cloud_drive=config.path_on_cloud_drive,
+        rclone_config_path=config.rclone_config_path,
+        rclone=config.rclone,
+        rclone_verbose=config.rclone_verbose,
+    )
 
     # Determine the .unionfs-fuse directory name as to not upload it
     exclude_name = _encode_with_encfs(
@@ -359,12 +388,24 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
 
     message = 'Upload Complete - Syncing changes'
     LOGGER.info(message)
-    _local_cleanup(config=config)
+    _local_cleanup(
+        days_to_keep_local=config.days_to_keep_local,
+        local_decrypted=config.local_decrypted,
+    )
     upload_pid_file.unlink()
 
 
-def _sync_deletes(config: _Config) -> None:
-    search_dir = config.local_decrypted / '.unionfs-fuse'
+def _sync_deletes(
+    local_decrypted: Path,
+    encfs_pass: str,
+    remote_encrypted: Path,
+    rclone_remote: str,
+    path_on_cloud_drive: str,
+    rclone_config_path: Path,
+    rclone: Path,
+    rclone_verbose: bool,
+) -> None:
+    search_dir = local_decrypted / '.unionfs-fuse'
 
     if not (search_dir.exists() and search_dir.is_dir()):
         message = 'No .unionfs-fuse/ directory found, nothing to delete'
@@ -384,8 +425,8 @@ def _sync_deletes(config: _Config) -> None:
         )
         encname = _encode_with_encfs(
             path_or_file_name=str(not_hidden_relative_file),
-            encfs_pass=config.encfs_pass,
-            root_dir=config.remote_encrypted,
+            encfs_pass=encfs_pass,
+            root_dir=remote_encrypted,
         )
 
         if not encname:
@@ -395,8 +436,8 @@ def _sync_deletes(config: _Config) -> None:
             continue
 
         rclone_path = _rclone_path(
-            rclone_remote=config.rclone_remote,
-            rclone_root=config.path_on_cloud_drive,
+            rclone_remote=rclone_remote,
+            rclone_root=path_on_cloud_drive,
             rclone_relative_path=encname,
         )
 
@@ -404,10 +445,10 @@ def _sync_deletes(config: _Config) -> None:
         LOGGER.info(message)
 
         rclone_args = [
-            str(config.rclone),
+            str(rclone),
             '--config',
-            str(config.rclone_config_path),
-            _rclone_verbosity_flag(verbose=config.rclone_verbose),
+            str(rclone_config_path),
+            _rclone_verbosity_flag(verbose=rclone_verbose),
             'ls',
             '--max-depth',
             '1',
@@ -435,10 +476,10 @@ def _sync_deletes(config: _Config) -> None:
                 delete_cmd = 'purge'
 
             rclone_delete_args = [
-                str(config.rclone),
+                str(rclone),
                 '--config',
-                str(config.rclone_config_path),
-                _rclone_verbosity_flag(verbose=config.rclone_verbose),
+                str(rclone_config_path),
+                _rclone_verbosity_flag(verbose=rclone_verbose),
                 delete_cmd,
                 rclone_path,
             ]
@@ -470,17 +511,41 @@ def sync_deletes(ctx: click.core.Context, config: _Config) -> None:
     """
     Reflect unionfs deleted file objects on Google Drive.
     """
-    _pre_command_setup(ctx=ctx, config=config)
-    _sync_deletes(config=config)
+    _pre_command_setup(
+        ctx=ctx,
+        encfs6_config=config.encfs6_config,
+        rclone=config.rclone,
+    )
+    _sync_deletes(
+        local_decrypted=config.local_decrypted,
+        encfs_pass=config.encfs_pass,
+        remote_encrypted=config.remote_encrypted,
+        rclone_remote=config.rclone_remote,
+        path_on_cloud_drive=config.path_on_cloud_drive,
+        rclone_config_path=config.rclone_config_path,
+        rclone=config.rclone,
+        rclone_verbose=config.rclone_verbose,
+    )
 
 
-def _mount(ctx: click.core.Context, config: _Config) -> None:
+def _mount(
+    ctx: click.core.Context,
+    remote_encrypted: Path,
+    remote_decrypted: Path,
+    local_encrypted: Path,
+    local_decrypted: Path,
+    data_dir: Path,
+    config_dict: Dict[str, Union[float, int, str, bool]],
+    cloud_drive_tools_path: Path,
+    encfs_pass: str,
+    path_on_cloud_drive: str,
+) -> None:
     dirs_to_create = [
-        config.remote_encrypted,
-        config.remote_decrypted,
-        config.local_encrypted,
-        config.local_decrypted,
-        config.data_dir,
+        remote_encrypted,
+        remote_decrypted,
+        local_encrypted,
+        local_decrypted,
+        data_dir,
     ]
 
     for directory in dirs_to_create:
@@ -500,13 +565,13 @@ def _mount(ctx: click.core.Context, config: _Config) -> None:
             )
 
     # pathlib.Path does not handle `///` well in a path.
-    remote_mount = f'{config.remote_encrypted}//{config.path_on_cloud_drive}'
+    remote_mount = f'{remote_encrypted}//{path_on_cloud_drive}'
 
     message = 'Mounting cloud storage drive'
     LOGGER.info(message)
     _, config_file_path_str = tempfile.mkstemp()
     config_file_path = Path(config_file_path_str)
-    config_contents = yaml.dump(data=config.as_dict())
+    config_contents = yaml.dump(data=config_dict)
     config_file_path.write_text(config_contents)
     pid = os.getpid()
     screen_log_dir = Path('/var/log')
@@ -521,7 +586,7 @@ def _mount(ctx: click.core.Context, config: _Config) -> None:
         '-dm',
         '-S',
         'cloud-drive-tools-mount',
-        str(config.cloud_drive_tools_path),
+        str(cloud_drive_tools_path),
         'acd-cli-mount',
         '-c',
         str(config_file_path),
@@ -546,10 +611,10 @@ def _mount(ctx: click.core.Context, config: _Config) -> None:
     encfs_args = [
         'encfs',
         '--extpass',
-        f'echo {config.encfs_pass}',
+        f'echo {encfs_pass}',
         '--reverse',
-        str(config.local_decrypted),
-        str(config.local_encrypted),
+        str(local_decrypted),
+        str(local_encrypted),
     ]
     subprocess.run(args=encfs_args, check=True)
 
@@ -558,9 +623,9 @@ def _mount(ctx: click.core.Context, config: _Config) -> None:
     encfs_args = [
         'encfs',
         '--extpass',
-        f'echo {config.encfs_pass}',
+        f'echo {encfs_pass}',
         remote_mount,
-        str(config.remote_decrypted),
+        str(remote_decrypted),
     ]
     subprocess.run(args=encfs_args, check=True)
 
@@ -570,8 +635,8 @@ def _mount(ctx: click.core.Context, config: _Config) -> None:
         'unionfs-fuse',
         '-o',
         'cow,allow_other',
-        f'{config.local_decrypted}=RW:{config.remote_decrypted}=RO',
-        str(config.data_dir),
+        f'{local_decrypted}=RW:{remote_decrypted}=RO',
+        str(data_dir),
     ]
     subprocess.run(args=unionfs_fuse_args, check=True)
 
@@ -592,16 +657,43 @@ def mount(
     """
     Mount necessary directories.
     """
-    _pre_command_setup(ctx=ctx, config=config)
+    _pre_command_setup(
+        ctx=ctx,
+        encfs6_config=config.encfs6_config,
+        rclone=config.rclone,
+    )
     if not no_unmount:
-        _unmount_all(config=config)
-    _mount(ctx=ctx, config=config)
+        _unmount_all(
+            data_dir=config.data_dir,
+            remote_encrypted=config.remote_encrypted,
+            unmount_lock_file=config.unmount_lock_file,
+            local_encrypted=config.local_encrypted,
+            remote_decrypted=config.remote_decrypted,
+        )
+
+    _mount(
+        ctx=ctx,
+        remote_encrypted=config.remote_encrypted,
+        remote_decrypted=config.remote_decrypted,
+        local_encrypted=config.local_encrypted,
+        local_decrypted=config.local_decrypted,
+        data_dir=config.data_dir,
+        config_dict=config.as_dict(),
+        cloud_drive_tools_path=config.cloud_drive_tools_path,
+        encfs_pass=config.encfs_pass,
+        path_on_cloud_drive=config.path_on_cloud_drive,
+    )
 
 
-def _acd_cli_mount(config: _Config) -> None:
-    unmount_lock_file = Path(__file__).parent / 'unmount.acd'
+def _mount_cloud_storage(
+    rclone_remote: str,
+    unmount_lock_file: Path,
+    rclone: Path,
+    remote_encrypted: Path,
+    rclone_verbose: bool,
+) -> None:
     rclone_path = _rclone_path(
-        rclone_remote=config.rclone_remote,
+        rclone_remote=rclone_remote,
         rclone_root='/',
         rclone_relative_path=None,
     )
@@ -609,17 +701,17 @@ def _acd_cli_mount(config: _Config) -> None:
     while not unmount_lock_file.exists():
         message = 'Running cloud storage mount in the foreground'
         LOGGER.info(message)
-        _unmount(mountpoint=config.remote_encrypted)
+        _unmount(mountpoint=remote_encrypted)
         mount_args = [
-            str(config.rclone),
+            str(rclone),
             'mount',
             rclone_path,
-            str(config.remote_encrypted),
+            str(remote_encrypted),
             '--allow-other',
             '--read-only',
             '--umask',
             '000',
-            _rclone_verbosity_flag(verbose=config.rclone_verbose),
+            _rclone_verbosity_flag(verbose=rclone_verbose),
             '--fast-list',
             '--dir-cache-time',
             '24h',
@@ -634,7 +726,7 @@ def _acd_cli_mount(config: _Config) -> None:
         LOGGER.info(message)
         time.sleep(2)
 
-    message = 'The acdcli mount exited cleanly'
+    message = 'The cloud drive mount exited cleanly'
     LOGGER.info(message)
     unmount_lock_file.unlink()
 
@@ -678,7 +770,11 @@ def show_encoded_path(
     """
     Show the encfs encoded path given a decoded file path or name.
     """
-    _pre_command_setup(ctx=ctx, config=config)
+    _pre_command_setup(
+        ctx=ctx,
+        encfs6_config=config.encfs6_config,
+        rclone=config.rclone,
+    )
     encoded_path = _encode_with_encfs(
         path_or_file_name=decoded_path,
         encfs_pass=config.encfs_pass,
@@ -701,7 +797,11 @@ def move_file_or_dir(
     """
     Move a file from source to destination.
     """
-    _pre_command_setup(ctx=ctx, config=config)
+    _pre_command_setup(
+        ctx=ctx,
+        encfs6_config=config.encfs6_config,
+        rclone=config.rclone,
+    )
     encoded_src_path = _encode_with_encfs(
         path_or_file_name=src,
         encfs_pass=config.encfs_pass,
@@ -748,7 +848,11 @@ def mkdir(
     """
     Create a directory.
     """
-    _pre_command_setup(ctx=ctx, config=config)
+    _pre_command_setup(
+        ctx=ctx,
+        encfs6_config=config.encfs6_config,
+        rclone=config.rclone,
+    )
     encoded_path = _encode_with_encfs(
         path_or_file_name=path,
         encfs_pass=config.encfs_pass,
@@ -779,8 +883,18 @@ def acd_cli_mount(ctx: click.core.Context, config: _Config) -> None:
     """
     Foreground mount which will keep remounting until unmount file exists.
     """
-    _pre_command_setup(ctx=ctx, config=config)
-    _acd_cli_mount(config=config)
+    _pre_command_setup(
+        ctx=ctx,
+        encfs6_config=config.encfs6_config,
+        rclone=config.rclone,
+    )
+    _mount_cloud_storage(
+        rclone_remote=config.rclone_remote,
+        unmount_lock_file=config.unmount_lock_file,
+        rclone=config.rclone,
+        remote_encrypted=config.remote_encrypted,
+        rclone_verbose=config.rclone_verbose,
+    )
 
 
 cloud_drive_tools.add_command(acd_cli_mount)
