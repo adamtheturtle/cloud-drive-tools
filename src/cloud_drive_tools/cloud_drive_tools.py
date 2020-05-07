@@ -603,40 +603,11 @@ def _mount(
     encfs_pass: str,
     path_on_cloud_drive: str,
 ) -> None:
-    _create_dirs(
-        remote_encrypted=remote_encrypted,
-        remote_decrypted=remote_decrypted,
-        local_encrypted=local_encrypted,
-        local_decrypted=local_decrypted,
-        data_dir=data_dir,
+
+    _mount_cloud_storage_background(
+        config_dict=config_dict,
+        cloud_drive_tools_path=cloud_drive_tools_path,
     )
-
-    message = 'Mounting cloud storage drive'
-    LOGGER.info(message)
-    _, config_file_path_str = tempfile.mkstemp()
-    config_file_path = Path(config_file_path_str)
-    config_contents = yaml.dump(data=config_dict)
-    config_file_path.write_text(config_contents)
-    pid = os.getpid()
-    screen_log_dir = Path('/var/log')
-    screen_log_filename = f'cloud-drive-tools-screenlog.{pid}'
-    screen_log_path = screen_log_dir / screen_log_filename
-
-    screen_args = [
-        'screen',
-        '-L',
-        '-Logfile',
-        str(screen_log_path),
-        '-dm',
-        '-S',
-        'cloud-drive-tools-mount',
-        str(cloud_drive_tools_path),
-        'cloud-drive-mount',
-        '-c',
-        str(config_file_path),
-    ]
-
-    subprocess.run(args=screen_args, check=True)
 
     _wait_for_remote_mount(
         ctx=ctx,
@@ -729,9 +700,14 @@ def _mount_cloud_storage(
     rclone_remote: str,
     unmount_lock_file: Path,
     rclone: Path,
-    remote_encrypted: Path,
     rclone_verbose: bool,
+    remote_encrypted: Path,
 ) -> None:
+    """
+    Mount the cloud storage in the foreground.
+    Unless an unmount operation is started, this can run forever, logging
+    what is happening with the cloud storage.
+    """
     rclone_path = _rclone_path(
         rclone_remote=rclone_remote,
         rclone_root='/',
@@ -769,6 +745,46 @@ def _mount_cloud_storage(
     message = 'The cloud drive mount exited cleanly'
     LOGGER.info(message)
     unmount_lock_file.unlink()
+
+
+def _mount_cloud_storage_background(
+    config_dict: Dict[str, Union[float, bool, str]],
+    cloud_drive_tools_path: Path,
+) -> None:
+    """
+    Mount cloud storage as a background task.
+
+    This will return before the mount is ready.
+
+    Logs are sent to ``/var/log``.
+    """
+
+    message = 'Mounting cloud storage drive'
+    LOGGER.info(message)
+    _, config_file_path_str = tempfile.mkstemp()
+    config_file_path = Path(config_file_path_str)
+    config_contents = yaml.dump(data=config_dict)
+    config_file_path.write_text(config_contents)
+    pid = os.getpid()
+    screen_log_dir = Path('/var/log')
+    screen_log_filename = f'cloud-drive-tools-screenlog.{pid}'
+    screen_log_path = screen_log_dir / screen_log_filename
+
+    screen_args = [
+        'screen',
+        '-L',
+        '-Logfile',
+        str(screen_log_path),
+        '-dm',
+        '-S',
+        'cloud-drive-tools-mount',
+        str(cloud_drive_tools_path),
+        'cloud-drive-mount',
+        '-c',
+        str(config_file_path),
+    ]
+
+    subprocess.run(args=screen_args, check=True)
 
 
 def _encode_with_encfs(
@@ -980,6 +996,14 @@ def mount_cloud_storage(ctx: click.core.Context, config: _Config) -> None:
         encfs6_config=config.encfs6_config,
         rclone=config.rclone,
     )
+    _create_dirs(
+        remote_encrypted=config.remote_encrypted,
+        remote_decrypted=config.remote_decrypted,
+        local_encrypted=config.local_encrypted,
+        local_decrypted=config.local_decrypted,
+        data_dir=config.data_dir,
+    )
+
     _mount_cloud_storage(
         rclone_remote=config.rclone_remote,
         unmount_lock_file=config.unmount_lock_file,
