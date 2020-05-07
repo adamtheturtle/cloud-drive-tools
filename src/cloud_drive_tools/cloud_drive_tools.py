@@ -591,29 +591,20 @@ def _wait_for_remote_mount(
         time.sleep(sleep_seconds)
 
 
-def _mount(
-    ctx: click.core.Context,
+def _mount_data_dir(
     remote_encrypted: Path,
     remote_decrypted: Path,
     local_encrypted: Path,
     local_decrypted: Path,
     data_dir: Path,
-    config_dict: Dict[str, Union[float, int, str, bool]],
-    cloud_drive_tools_path: Path,
     encfs_pass: str,
     path_on_cloud_drive: str,
 ) -> None:
+    """
+    Mount the local data directory.
 
-    _mount_cloud_storage_background(
-        config_dict=config_dict,
-        cloud_drive_tools_path=cloud_drive_tools_path,
-    )
-
-    _wait_for_remote_mount(
-        ctx=ctx,
-        remote_encrypted=remote_encrypted,
-        path_on_cloud_drive=path_on_cloud_drive,
-    )
+    This expects that the cloud drive is mounted.
+    """
 
     message = 'Mounting local encrypted filesystem'
     LOGGER.info(message)
@@ -682,15 +673,23 @@ def mount(
             remote_decrypted=config.remote_decrypted,
         )
 
-    _mount(
+    _mount_cloud_storage_background(
+        config_dict=config.as_dict(),
+        cloud_drive_tools_path=config.cloud_drive_tools_path,
+    )
+
+    _wait_for_remote_mount(
         ctx=ctx,
+        remote_encrypted=config.remote_encrypted,
+        path_on_cloud_drive=config.path_on_cloud_drive,
+    )
+
+    _mount_data_dir(
         remote_encrypted=config.remote_encrypted,
         remote_decrypted=config.remote_decrypted,
         local_encrypted=config.local_encrypted,
         local_decrypted=config.local_decrypted,
         data_dir=config.data_dir,
-        config_dict=config.as_dict(),
-        cloud_drive_tools_path=config.cloud_drive_tools_path,
         encfs_pass=config.encfs_pass,
         path_on_cloud_drive=config.path_on_cloud_drive,
     )
