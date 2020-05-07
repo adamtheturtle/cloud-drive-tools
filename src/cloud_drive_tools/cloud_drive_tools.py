@@ -528,18 +528,16 @@ def sync_deletes(ctx: click.core.Context, config: _Config) -> None:
     )
 
 
-def _mount(
-    ctx: click.core.Context,
+def _create_dirs(
     remote_encrypted: Path,
     remote_decrypted: Path,
     local_encrypted: Path,
     local_decrypted: Path,
     data_dir: Path,
-    config_dict: Dict[str, Union[float, int, str, bool]],
-    cloud_drive_tools_path: Path,
-    encfs_pass: str,
-    path_on_cloud_drive: str,
 ) -> None:
+    """
+    Create necessary directories if they do not exist.
+    """
     dirs_to_create = [
         remote_encrypted,
         remote_decrypted,
@@ -563,9 +561,28 @@ def _mount(
                 f'Directory "{directory}" already exists and an error was '
                 'raised which we are ignoring.'
             )
+            LOGGER.info(message)
 
-    # pathlib.Path does not handle `///` well in a path.
-    remote_mount = f'{remote_encrypted}//{path_on_cloud_drive}'
+
+def _mount(
+    ctx: click.core.Context,
+    remote_encrypted: Path,
+    remote_decrypted: Path,
+    local_encrypted: Path,
+    local_decrypted: Path,
+    data_dir: Path,
+    config_dict: Dict[str, Union[float, int, str, bool]],
+    cloud_drive_tools_path: Path,
+    encfs_pass: str,
+    path_on_cloud_drive: str,
+) -> None:
+    _create_dirs(
+        remote_encrypted=remote_encrypted,
+        remote_decrypted=remote_decrypted,
+        local_encrypted=local_encrypted,
+        local_decrypted=local_decrypted,
+        data_dir=data_dir,
+    )
 
     message = 'Mounting cloud storage drive'
     LOGGER.info(message)
@@ -594,6 +611,8 @@ def _mount(
 
     subprocess.run(args=screen_args, check=True)
 
+    # pathlib.Path does not handle `///` well in a path.
+    remote_mount = f'{remote_encrypted}//{path_on_cloud_drive}'
     # After `screen` starts it takes some time to mount the drive.
     attempts = 0
     while not os.path.exists(remote_mount):
