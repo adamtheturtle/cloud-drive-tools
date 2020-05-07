@@ -832,7 +832,7 @@ def show_decoded_path(
         encfs_pass=config.encfs_pass,
         root_dir=config.remote_encrypted,
     )
-    click.echo(encoded_path)
+    click.echo(decoded_path)
 
 
 @click.command('move-file-or-dir')
