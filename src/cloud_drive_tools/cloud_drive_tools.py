@@ -651,27 +651,33 @@ def mount(
     )
 
 
-def _mount_cloud_storage(config: _Config) -> None:
+def _mount_cloud_storage(
+    rclone_remote: str,
+    unmount_lock_file: Path,
+    rclone: Path,
+    remote_encrypted: Path,
+    rclone_verbose: bool,
+) -> None:
     rclone_path = _rclone_path(
-        rclone_remote=config.rclone_remote,
+        rclone_remote=rclone_remote,
         rclone_root='/',
         rclone_relative_path=None,
     )
 
-    while not config.unmount_lock_file.exists():
+    while not unmount_lock_file.exists():
         message = 'Running cloud storage mount in the foreground'
         LOGGER.info(message)
-        _unmount(mountpoint=config.remote_encrypted)
+        _unmount(mountpoint=remote_encrypted)
         mount_args = [
-            str(config.rclone),
+            str(rclone),
             'mount',
             rclone_path,
-            str(config.remote_encrypted),
+            str(remote_encrypted),
             '--allow-other',
             '--read-only',
             '--umask',
             '000',
-            _rclone_verbosity_flag(verbose=config.rclone_verbose),
+            _rclone_verbosity_flag(verbose=rclone_verbose),
             '--fast-list',
             '--dir-cache-time',
             '24h',
@@ -688,7 +694,7 @@ def _mount_cloud_storage(config: _Config) -> None:
 
     message = 'The cloud drive mount exited cleanly'
     LOGGER.info(message)
-    config.unmount_lock_file.unlink()
+    unmount_lock_file.unlink()
 
 
 def _encode_with_encfs(
@@ -832,7 +838,13 @@ def acd_cli_mount(ctx: click.core.Context, config: _Config) -> None:
     Foreground mount which will keep remounting until unmount file exists.
     """
     _pre_command_setup(ctx=ctx, config=config)
-    _mount_cloud_storage(config=config)
+    _mount_cloud_storage(
+        rclone_remote=config.rclone_remote,
+        unmount_lock_file=config.unmount_lock_file,
+        rclone=config.rclone,
+        remote_encrypted=config.remote_encrypted,
+        rclone_verbose=config.rclone_verbose,
+    )
 
 
 cloud_drive_tools.add_command(acd_cli_mount)
