@@ -285,8 +285,7 @@ def _unmount_all(
 
 @click.command('unmount')
 @config_option
-@click.pass_context
-def unmount_all(ctx: click.core.Context, config: _Config) -> None:
+def unmount_all(config: _Config) -> None:
     """
     Unmount all mountpoints associated with Cloud Drive Tools.
     """
@@ -482,8 +481,7 @@ def _sync_deletes(
 
 @click.command('sync-deletes')
 @config_option
-@click.pass_context
-def sync_deletes(ctx: click.core.Context, config: _Config) -> None:
+def sync_deletes(config: _Config) -> None:
     """
     Reflect unionfs deleted file objects on Google Drive.
     """
@@ -746,12 +744,7 @@ def _decode_with_encfs(
 @click.command('show-encoded-path')
 @config_option
 @click.argument('decoded-path')
-@click.pass_context
-def show_encoded_path(
-    ctx: click.core.Context,
-    config: _Config,
-    decoded_path: str,
-) -> None:
+def show_encoded_path(config: _Config, decoded_path: str) -> None:
     """
     Show the encfs encoded path given a decoded file path or name.
     """
@@ -766,12 +759,7 @@ def show_encoded_path(
 @click.command('show-decoded-path')
 @config_option
 @click.argument('encoded-path')
-@click.pass_context
-def show_decoded_path(
-    ctx: click.core.Context,
-    config: _Config,
-    encoded_path: str,
-) -> None:
+def show_decoded_path(config: _Config, encoded_path: str) -> None:
     """
     Show the encfs decoded path given an encoded file path or name.
     """
@@ -787,13 +775,7 @@ def show_decoded_path(
 @config_option
 @click.argument('src')
 @click.argument('dst')
-@click.pass_context
-def move_file_or_dir(
-    ctx: click.core.Context,
-    config: _Config,
-    src: str,
-    dst: str,
-) -> None:
+def move_file_or_dir(config: _Config, src: str, dst: str) -> None:
     """
     Move a file from source to destination.
     """
@@ -834,12 +816,7 @@ def move_file_or_dir(
 @click.command('mkdir')
 @config_option
 @click.argument('path')
-@click.pass_context
-def mkdir(
-    ctx: click.core.Context,
-    config: _Config,
-    path: str,
-) -> None:
+def mkdir(config: _Config, path: str) -> None:
     """
     Create a directory.
     """
@@ -868,8 +845,7 @@ def mkdir(
 
 @click.command('cloud-drive-mount')
 @config_option
-@click.pass_context
-def mount_cloud_storage(ctx: click.core.Context, config: _Config) -> None:
+def mount_cloud_storage(config: _Config) -> None:
     """
     Foreground mount which will keep remounting until unmount file exists.
     """
@@ -892,8 +868,7 @@ def mount_cloud_storage(ctx: click.core.Context, config: _Config) -> None:
 
 @click.command('check-config')
 @config_option
-@click.pass_context
-def check_config(ctx: click.core.Context, config: _Config) -> None:
+def check_config(config: _Config) -> None:  # pylint: disable=unused-argument
     """
     Check some parts of the given configuration file and error if there is a
     problem.
