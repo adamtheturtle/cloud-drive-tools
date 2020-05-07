@@ -534,7 +534,7 @@ def _create_dirs(
     local_encrypted: Path,
     local_decrypted: Path,
     data_dir: Path,
-):
+) -> None:
     """
     Create necessary directories if they do not exist.
     """
@@ -582,7 +582,7 @@ def _mount(
         local_encrypted=local_encrypted,
         local_decrypted=local_decrypted,
         data_dir=data_dir,
-    ]
+    )
 
     message = 'Mounting cloud storage drive'
     LOGGER.info(message)
