@@ -216,21 +216,20 @@ def config_option(command: Callable[..., None]) -> Callable[..., None]:
     return function
 
 
-def _local_cleanup(config: _Config) -> None:
+def _local_cleanup(days_to_keep_local: float, local_decrypted: Path) -> None:
     """
     Delete local data older than "days_to_keep_local" from the configuration
     file.
     """
     message = (
-        f'Deleting local files older than "{config.days_to_keep_local}" days '
-        'old.'
+        f'Deleting local files older than "{days_to_keep_local}" days old.'
     )
 
     LOGGER.info(message)
 
-    seconds_to_keep_local = config.days_to_keep_local * 24 * 60 * 60
+    seconds_to_keep_local = days_to_keep_local * 24 * 60 * 60
 
-    file_paths = config.local_decrypted.rglob('*')
+    file_paths = local_decrypted.rglob('*')
 
     now_timestamp = datetime.datetime.now().timestamp()
     oldest_acceptable_time = now_timestamp - seconds_to_keep_local
@@ -241,8 +240,8 @@ def _local_cleanup(config: _Config) -> None:
             path.unlink()
 
     message = (
-        'Finished deleting local files older than'
-        f'"{config.days_to_keep_local}" days old.'
+        f'Finished deleting local files older than "{days_to_keep_local}" '
+        'days old.'
     )
 
     LOGGER.info(message)
@@ -360,7 +359,10 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
 
     message = 'Upload Complete - Syncing changes'
     LOGGER.info(message)
-    _local_cleanup(config=config)
+    _local_cleanup(
+        days_to_keep_local=config.days_to_keep_local,
+        local_decrypted=config.local_decrypted,
+    )
     upload_pid_file.unlink()
 
 
