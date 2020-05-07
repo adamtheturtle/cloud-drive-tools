@@ -46,12 +46,16 @@ class _Config:
         self.days_to_keep_local = days_to_keep_local
         self.encfs6_config = encfs6_config
         self.encfs_pass = encfs_pass
-        self.mount_base = mount_base
         self.path_on_cloud_drive = path_on_cloud_drive
         self.rclone = rclone
         self.rclone_config_path = rclone_config_path
         self.rclone_remote = rclone_remote
         self.rclone_verbose = rclone_verbose
+        self.mount_base = mount_base
+        self.remote_encrypted = mount_base / 'acd-encrypted'
+        self.remote_decrypted = mount_base / 'acd-decrypted'
+        self.local_encrypted = mount_base / 'local-encrypted'
+        self.local_decrypted = mount_base / 'local-decrypted'
 
     def as_dict(self) -> Dict[str, Union[str, float, bool]]:
         return {
@@ -214,8 +218,6 @@ def _local_cleanup(config: _Config) -> None:
     Delete local data older than "days_to_keep_local" from the configuration
     file.
     """
-    local_decrypted = config.mount_base / 'local-decrypted'
-
     message = (
         f'Deleting local files older than "{config.days_to_keep_local}" days '
         'old.'
@@ -225,7 +227,7 @@ def _local_cleanup(config: _Config) -> None:
 
     seconds_to_keep_local = config.days_to_keep_local * 24 * 60 * 60
 
-    file_paths = local_decrypted.rglob('*')
+    file_paths = config.local_decrypted.rglob('*')
 
     now_timestamp = datetime.datetime.now().timestamp()
     oldest_acceptable_time = now_timestamp - seconds_to_keep_local
@@ -274,21 +276,18 @@ def _unmount_all(config: _Config) -> None:
     message = 'Unmounting all ACDTools mountpoints'
     LOGGER.info(message)
 
-    remote_encrypted = config.mount_base / 'acd-encrypted'
-    remote_decrypted = config.mount_base / 'acd-decrypted'
-    local_encrypted = config.mount_base / 'local-encrypted'
     unmount_lock_file = Path(__file__).parent / 'unmount.acd'
 
     _unmount(mountpoint=config.data_dir)
     unmount_lock_file.touch()
-    _unmount(mountpoint=remote_encrypted)
+    _unmount(mountpoint=config.remote_encrypted)
     time.sleep(6)
     try:
         unmount_lock_file.unlink()
     except FileNotFoundError:
         pass
-    _unmount(mountpoint=remote_decrypted)
-    _unmount(mountpoint=local_encrypted)
+    _unmount(mountpoint=config.remote_decrypted)
+    _unmount(mountpoint=config.local_encrypted)
 
 
 @click.command('unmount')
@@ -311,9 +310,6 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
     """
     _pre_command_setup(ctx=ctx, config=config)
 
-    remote_encrypted = config.mount_base / 'acd-encrypted'
-    local_encrypted = config.mount_base / 'local-encrypted'
-
     upload_pid_file = Path(__file__).parent / 'upload.pid'
     if upload_pid_file.exists():
         running_pid = upload_pid_file.read_text()
@@ -332,7 +328,7 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
     exclude_name = _encode_with_encfs(
         path_or_file_name='.unionfs-fuse',
         encfs_pass=config.encfs_pass,
-        root_dir=remote_encrypted,
+        root_dir=config.remote_encrypted,
     )
 
     upload_args = [
@@ -346,7 +342,7 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
         '5',
         '--exclude',
         f'/{exclude_name}/*',
-        str(local_encrypted),
+        str(config.local_encrypted),
         _rclone_path(
             rclone_remote=config.rclone_remote,
             rclone_root=config.path_on_cloud_drive,
@@ -354,11 +350,11 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
         ),
     ]
 
-    children = str(local_encrypted.glob('*'))
+    children = str(config.local_encrypted.glob('*'))
     if children:
         subprocess.run(args=upload_args, check=True)
     else:
-        message = f'{local_encrypted} is empty - nothing to upload'
+        message = f'{config.local_encrypted} is empty - nothing to upload'
         LOGGER.info(msg=message)
 
     message = 'Upload Complete - Syncing changes'
@@ -368,9 +364,7 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
 
 
 def _sync_deletes(config: _Config) -> None:
-    remote_encrypted = config.mount_base / 'acd-encrypted'
-    local_decrypted = config.mount_base / 'local-decrypted'
-    search_dir = local_decrypted / '.unionfs-fuse'
+    search_dir = config.local_decrypted / '.unionfs-fuse'
 
     if not (search_dir.exists() and search_dir.is_dir()):
         message = 'No .unionfs-fuse/ directory found, nothing to delete'
@@ -391,7 +385,7 @@ def _sync_deletes(config: _Config) -> None:
         encname = _encode_with_encfs(
             path_or_file_name=str(not_hidden_relative_file),
             encfs_pass=config.encfs_pass,
-            root_dir=remote_encrypted,
+            root_dir=config.remote_encrypted,
         )
 
         if not encname:
@@ -481,16 +475,11 @@ def sync_deletes(ctx: click.core.Context, config: _Config) -> None:
 
 
 def _mount(ctx: click.core.Context, config: _Config) -> None:
-    remote_encrypted = config.mount_base / 'acd-encrypted'
-    remote_decrypted = config.mount_base / 'acd-decrypted'
-    local_encrypted = config.mount_base / 'local-encrypted'
-    local_decrypted = config.mount_base / 'local-decrypted'
-
     dirs_to_create = [
-        remote_encrypted,
-        remote_decrypted,
-        local_encrypted,
-        local_decrypted,
+        config.remote_encrypted,
+        config.remote_decrypted,
+        config.local_encrypted,
+        config.local_decrypted,
         config.data_dir,
     ]
 
@@ -511,7 +500,7 @@ def _mount(ctx: click.core.Context, config: _Config) -> None:
             )
 
     # pathlib.Path does not handle `///` well in a path.
-    remote_mount = str(remote_encrypted) + '//' + config.path_on_cloud_drive
+    remote_mount = f'{config.remote_encrypted}//{config.path_on_cloud_drive}'
 
     message = 'Mounting cloud storage drive'
     LOGGER.info(message)
@@ -559,8 +548,8 @@ def _mount(ctx: click.core.Context, config: _Config) -> None:
         '--extpass',
         f'echo {config.encfs_pass}',
         '--reverse',
-        str(local_decrypted),
-        str(local_encrypted),
+        str(config.local_decrypted),
+        str(config.local_encrypted),
     ]
     subprocess.run(args=encfs_args, check=True)
 
@@ -571,7 +560,7 @@ def _mount(ctx: click.core.Context, config: _Config) -> None:
         '--extpass',
         f'echo {config.encfs_pass}',
         remote_mount,
-        str(remote_decrypted),
+        str(config.remote_decrypted),
     ]
     subprocess.run(args=encfs_args, check=True)
 
@@ -581,7 +570,7 @@ def _mount(ctx: click.core.Context, config: _Config) -> None:
         'unionfs-fuse',
         '-o',
         'cow,allow_other',
-        f'{local_decrypted}=RW:{remote_decrypted}=RO',
+        f'{config.local_decrypted}=RW:{config.remote_decrypted}=RO',
         str(config.data_dir),
     ]
     subprocess.run(args=unionfs_fuse_args, check=True)
@@ -611,7 +600,6 @@ def mount(
 
 def _acd_cli_mount(config: _Config) -> None:
     unmount_lock_file = Path(__file__).parent / 'unmount.acd'
-    remote_encrypted = config.mount_base / 'acd-encrypted'
     rclone_path = _rclone_path(
         rclone_remote=config.rclone_remote,
         rclone_root='/',
@@ -621,12 +609,12 @@ def _acd_cli_mount(config: _Config) -> None:
     while not unmount_lock_file.exists():
         message = 'Running cloud storage mount in the foreground'
         LOGGER.info(message)
-        _unmount(mountpoint=remote_encrypted)
+        _unmount(mountpoint=config.remote_encrypted)
         mount_args = [
             str(config.rclone),
             'mount',
             rclone_path,
-            str(remote_encrypted),
+            str(config.remote_encrypted),
             '--allow-other',
             '--read-only',
             '--umask',
@@ -691,11 +679,10 @@ def show_encoded_path(
     Show the encfs encoded path given a decoded file path or name.
     """
     _pre_command_setup(ctx=ctx, config=config)
-    remote_encrypted = config.mount_base / 'acd-encrypted'
     encoded_path = _encode_with_encfs(
         path_or_file_name=decoded_path,
         encfs_pass=config.encfs_pass,
-        root_dir=remote_encrypted,
+        root_dir=config.remote_encrypted,
     )
     click.echo(encoded_path)
 
@@ -715,16 +702,15 @@ def move_file_or_dir(
     Move a file from source to destination.
     """
     _pre_command_setup(ctx=ctx, config=config)
-    remote_encrypted = config.mount_base / 'acd-encrypted'
     encoded_src_path = _encode_with_encfs(
         path_or_file_name=src,
         encfs_pass=config.encfs_pass,
-        root_dir=remote_encrypted,
+        root_dir=config.remote_encrypted,
     )
     encoded_dst_path = _encode_with_encfs(
         path_or_file_name=dst,
         encfs_pass=config.encfs_pass,
-        root_dir=remote_encrypted,
+        root_dir=config.remote_encrypted,
     )
 
     rclone_src_path = _rclone_path(
@@ -763,11 +749,10 @@ def mkdir(
     Create a directory.
     """
     _pre_command_setup(ctx=ctx, config=config)
-    remote_encrypted = config.mount_base / 'acd-encrypted'
     encoded_path = _encode_with_encfs(
         path_or_file_name=path,
         encfs_pass=config.encfs_pass,
-        root_dir=remote_encrypted,
+        root_dir=config.remote_encrypted,
     )
 
     rclone_path = _rclone_path(
