@@ -47,6 +47,8 @@ class _Config:
         self.encfs_pass = encfs_pass
         self.path_on_cloud_drive = path_on_cloud_drive
         self.rclone = rclone
+        message = f'"{rclone}" is not available on the PATH.'
+        assert shutil.which(str(rclone)) is not None, message
         self.rclone_config_path = rclone_config_path
         self.rclone_remote = rclone_remote
         self.rclone_verbose = rclone_verbose
@@ -57,6 +59,8 @@ class _Config:
         self.local_decrypted = mount_base / 'local-decrypted'
         unmount_lock_file_name = 'cloud-drive-tools-unmount.lock'
         self.unmount_lock_file = Path(__file__).parent / unmount_lock_file_name
+        # We should probably explicitly pass this to subprocesses.
+        os.environ['ENCFS6_CONFIG'] = str(encfs6_config)
 
     def as_dict(self) -> Dict[str, Union[str, float, bool]]:
         return {
@@ -79,6 +83,17 @@ def cloud_drive_tools() -> None:
     """
     Manage Plex tools.
     """
+    message = (
+        'Require a version of Python with a fix for '
+        'https://bugs.python.org/issue35192'
+    )
+    if sys.version_info.major == 3 and sys.version_info.minor == 6:
+        assert sys.version_info.micro >= 2, message
+
+    dependencies = ('unionfs-fuse', 'encfs', 'fusermount')
+    for dependency in dependencies:
+        message = f'"{dependency}" is not available on the PATH.'
+        assert shutil.which(str(dependency)) is not None, message
 
 
 def _rclone_verbosity_flag(verbose: bool) -> str:
@@ -102,27 +117,6 @@ def _rclone_path(
         return f'{rclone_remote}:{rclone_root}'
 
     return f'{rclone_remote}:{rclone_root}/{rclone_relative_path}'
-
-
-def _pre_command_setup(
-    ctx: click.core.Context,
-    encfs6_config: Path,
-    rclone: Path,
-) -> None:
-    message = (
-        'Require a version of Python with a fix for '
-        'https://bugs.python.org/issue35192'
-    )
-    if sys.version_info.major == 3 and sys.version_info.minor == 6:
-        assert sys.version_info.micro >= 2, message
-
-    os.environ['ENCFS6_CONFIG'] = str(encfs6_config)
-
-    dependencies = (str(rclone), 'unionfs-fuse', 'encfs', 'fusermount')
-    for dependency in dependencies:
-        if shutil.which(str(dependency)) is None:
-            message = f'"{dependency}" is not available on the PATH.'
-            ctx.fail(message=message)
 
 
 def _get_config(
@@ -296,11 +290,6 @@ def unmount_all(ctx: click.core.Context, config: _Config) -> None:
     """
     Unmount all mountpoints associated with Cloud Drive Tools.
     """
-    _pre_command_setup(
-        ctx=ctx,
-        encfs6_config=config.encfs6_config,
-        rclone=config.rclone,
-    )
     _unmount_all(
         data_dir=config.data_dir,
         remote_encrypted=config.remote_encrypted,
@@ -317,12 +306,6 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
     """
     Upload local data to the cloud.
     """
-    _pre_command_setup(
-        ctx=ctx,
-        encfs6_config=config.encfs6_config,
-        rclone=config.rclone,
-    )
-
     upload_pid_file = Path(__file__).parent / 'upload.pid'
     if upload_pid_file.exists():
         running_pid = upload_pid_file.read_text()
@@ -504,11 +487,6 @@ def sync_deletes(ctx: click.core.Context, config: _Config) -> None:
     """
     Reflect unionfs deleted file objects on Google Drive.
     """
-    _pre_command_setup(
-        ctx=ctx,
-        encfs6_config=config.encfs6_config,
-        rclone=config.rclone,
-    )
     _sync_deletes(
         local_decrypted=config.local_decrypted,
         encfs_pass=config.encfs_pass,
@@ -643,12 +621,6 @@ def mount_data_dir(ctx: click.core.Context, config: _Config) -> None:
     """
     Mount the data directory.
     """
-    _pre_command_setup(
-        ctx=ctx,
-        encfs6_config=config.encfs6_config,
-        rclone=config.rclone,
-    )
-
     _wait_for_remote_mount(
         ctx=ctx,
         remote_encrypted=config.remote_encrypted,
@@ -783,11 +755,6 @@ def show_encoded_path(
     """
     Show the encfs encoded path given a decoded file path or name.
     """
-    _pre_command_setup(
-        ctx=ctx,
-        encfs6_config=config.encfs6_config,
-        rclone=config.rclone,
-    )
     encoded_path = _encode_with_encfs(
         path_or_file_name=decoded_path,
         encfs_pass=config.encfs_pass,
@@ -808,11 +775,6 @@ def show_decoded_path(
     """
     Show the encfs decoded path given an encoded file path or name.
     """
-    _pre_command_setup(
-        ctx=ctx,
-        encfs6_config=config.encfs6_config,
-        rclone=config.rclone,
-    )
     decoded_path = _decode_with_encfs(
         path_or_file_name=encoded_path,
         encfs_pass=config.encfs_pass,
@@ -835,11 +797,6 @@ def move_file_or_dir(
     """
     Move a file from source to destination.
     """
-    _pre_command_setup(
-        ctx=ctx,
-        encfs6_config=config.encfs6_config,
-        rclone=config.rclone,
-    )
     encoded_src_path = _encode_with_encfs(
         path_or_file_name=src,
         encfs_pass=config.encfs_pass,
@@ -886,11 +843,6 @@ def mkdir(
     """
     Create a directory.
     """
-    _pre_command_setup(
-        ctx=ctx,
-        encfs6_config=config.encfs6_config,
-        rclone=config.rclone,
-    )
     encoded_path = _encode_with_encfs(
         path_or_file_name=path,
         encfs_pass=config.encfs_pass,
@@ -921,11 +873,6 @@ def mount_cloud_storage(ctx: click.core.Context, config: _Config) -> None:
     """
     Foreground mount which will keep remounting until unmount file exists.
     """
-    _pre_command_setup(
-        ctx=ctx,
-        encfs6_config=config.encfs6_config,
-        rclone=config.rclone,
-    )
     _create_dirs(
         remote_encrypted=config.remote_encrypted,
         remote_decrypted=config.remote_decrypted,
@@ -951,11 +898,6 @@ def check_config(ctx: click.core.Context, config: _Config) -> None:
     Check some parts of the given configuration file and error if there is a
     problem.
     """
-    _pre_command_setup(
-        ctx=ctx,
-        encfs6_config=config.encfs6_config,
-        rclone=config.rclone,
-    )
 
 
 @click.command('wait-for-cloud-storage-mount')
@@ -970,12 +912,6 @@ def wait_for_cloud_storage_mount(
 
     Exit with an error if it is not ready within the expected time.
     """
-    _pre_command_setup(
-        ctx=ctx,
-        encfs6_config=config.encfs6_config,
-        rclone=config.rclone,
-    )
-
     _wait_for_remote_mount(
         ctx=ctx,
         remote_encrypted=config.remote_encrypted,
