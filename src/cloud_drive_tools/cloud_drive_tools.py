@@ -56,6 +56,9 @@ class _Config:
         self.remote_decrypted = mount_base / 'acd-decrypted'
         self.local_encrypted = mount_base / 'local-encrypted'
         self.local_decrypted = mount_base / 'local-decrypted'
+        unmount_lock_file_name = 'cloud-drive-tools-unmount.lock'
+        self.unmount_lock_file = Path(__file__).parent / unmount_lock_file_name
+
 
     def as_dict(self) -> Dict[str, Union[str, float, bool]]:
         return {
@@ -276,14 +279,12 @@ def _unmount_all(config: _Config) -> None:
     message = 'Unmounting all Cloud Drive Tools mountpoints'
     LOGGER.info(message)
 
-    unmount_lock_file = Path(__file__).parent / 'unmount.acd'
-
     _unmount(mountpoint=config.data_dir)
-    unmount_lock_file.touch()
+    config.unmount_lock_file.touch()
     _unmount(mountpoint=config.remote_encrypted)
     time.sleep(6)
     try:
-        unmount_lock_file.unlink()
+        config.unmount_lock_file.unlink()
     except FileNotFoundError:
         pass
     _unmount(mountpoint=config.remote_decrypted)
@@ -599,14 +600,13 @@ def mount(
 
 
 def _mount_cloud_storage(config: _Config) -> None:
-    unmount_lock_file = Path(__file__).parent / 'unmount.acd'
     rclone_path = _rclone_path(
         rclone_remote=config.rclone_remote,
         rclone_root='/',
         rclone_relative_path=None,
     )
 
-    while not unmount_lock_file.exists():
+    while not config.unmount_lock_file.exists():
         message = 'Running cloud storage mount in the foreground'
         LOGGER.info(message)
         _unmount(mountpoint=config.remote_encrypted)
@@ -636,7 +636,7 @@ def _mount_cloud_storage(config: _Config) -> None:
 
     message = 'The cloud drive mount exited cleanly'
     LOGGER.info(message)
-    unmount_lock_file.unlink()
+    config.unmount_lock_file.unlink()
 
 
 def _encode_with_encfs(
