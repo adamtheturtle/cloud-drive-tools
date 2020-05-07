@@ -985,7 +985,6 @@ def wait_for_cloud_storage_mount(
 
 cloud_drive_tools.add_command(check_config)
 cloud_drive_tools.add_command(mkdir)
-cloud_drive_tools.add_command(mount)
 cloud_drive_tools.add_command(mount_cloud_storage)
 cloud_drive_tools.add_command(mount_data_dir)
 cloud_drive_tools.add_command(move_file_or_dir)
