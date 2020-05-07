@@ -698,11 +698,7 @@ def mount(
 @click.command('mount-data-dir')
 @config_option
 @click.pass_context
-def mount_data_dir(
-    ctx: click.core.Context,
-    config: _Config,
-    no_unmount: bool,
-) -> None:
+def mount_data_dir(ctx: click.core.Context, config: _Config) -> None:
     """
     Mount the data directory.
     """
