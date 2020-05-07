@@ -758,6 +758,33 @@ def _encode_with_encfs(
     return encname
 
 
+def _decode_with_encfs(
+    encfs_pass: str,
+    path_or_file_name: str,
+    root_dir: Path,
+) -> str:
+    """
+    Return an encfs decoded path.
+    """
+    encfsctl_args = [
+        'encfsctl',
+        'decode',
+        '--extpass',
+        f'echo {encfs_pass}',
+        str(root_dir),
+        path_or_file_name,
+    ]
+
+    encfsctl_result = subprocess.run(
+        args=encfsctl_args,
+        check=True,
+        stdout=subprocess.PIPE,
+    )
+
+    encname = encfsctl_result.stdout.decode().strip()
+    return encname
+
+
 @click.command('show-encoded-path')
 @config_option
 @click.argument('decoded-path')
@@ -781,6 +808,31 @@ def show_encoded_path(
         root_dir=config.remote_encrypted,
     )
     click.echo(encoded_path)
+
+
+@click.command('show-decoded-path')
+@config_option
+@click.argument('encoded-path')
+@click.pass_context
+def show_decoded_path(
+    ctx: click.core.Context,
+    config: _Config,
+    encoded_path: str,
+) -> None:
+    """
+    Show the encfs decoded path given an encoded file path or name.
+    """
+    _pre_command_setup(
+        ctx=ctx,
+        encfs6_config=config.encfs6_config,
+        rclone=config.rclone,
+    )
+    decoded_path = _decode_with_encfs(
+        path_or_file_name=encoded_path,
+        encfs_pass=config.encfs_pass,
+        root_dir=config.remote_encrypted,
+    )
+    click.echo(decoded_path)
 
 
 @click.command('move-file-or-dir')
