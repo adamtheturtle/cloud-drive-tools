@@ -897,6 +897,21 @@ def mount_cloud_storage(ctx: click.core.Context, config: _Config) -> None:
     )
 
 
+@click.command('check-config')
+@config_option
+@click.pass_context
+def check_config(ctx: click.core.Context, config: _Config) -> None:
+    """
+    Check some parts of the given configuration file and error if there is a
+    problem.
+    """
+    _pre_command_setup(
+        ctx=ctx,
+        encfs6_config=config.encfs6_config,
+        rclone=config.rclone,
+    )
+
+
 cloud_drive_tools.add_command(mount_cloud_storage)
 cloud_drive_tools.add_command(mount)
 cloud_drive_tools.add_command(sync_deletes)
@@ -905,6 +920,7 @@ cloud_drive_tools.add_command(upload)
 cloud_drive_tools.add_command(show_encoded_path)
 cloud_drive_tools.add_command(move_file_or_dir)
 cloud_drive_tools.add_command(mkdir)
+cloud_drive_tools.add_command(check_config)
 
 if __name__ == '__main__':
     cloud_drive_tools()
