@@ -51,7 +51,7 @@ class _Config:
         self.rclone_config_path = rclone_config_path
         self.rclone_remote = rclone_remote
         self.rclone_verbose = rclone_verbose
-        self.mount_base = mount_base
+        self._mount_base = mount_base
         self.remote_encrypted = mount_base / 'cloud-drive-encrypted'
         self.remote_decrypted = mount_base / 'cloud-drive-decrypted'
         self.local_encrypted = mount_base / 'local-encrypted'
@@ -66,7 +66,7 @@ class _Config:
             'days_to_keep_local': self.days_to_keep_local,
             'encfs6_config': str(self.encfs6_config),
             'encfs_pass': self.encfs_pass,
-            'mount_base': str(self.mount_base),
+            'mount_base': str(self._mount_base),
             'path_on_cloud_drive': self.path_on_cloud_drive,
             'rclone': str(self.rclone),
             'rclone_config_path': str(self.rclone_config_path),
