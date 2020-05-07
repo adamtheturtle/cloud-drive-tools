@@ -59,7 +59,6 @@ class _Config:
         unmount_lock_file_name = 'cloud-drive-tools-unmount.lock'
         self.unmount_lock_file = Path(__file__).parent / unmount_lock_file_name
 
-
     def as_dict(self) -> Dict[str, Union[str, float, bool]]:
         return {
             'cloud_drive_tools_path': str(self.cloud_drive_tools_path),
@@ -108,7 +107,8 @@ def _rclone_path(
 
 def _pre_command_setup(
     ctx: click.core.Context,
-    config: _Config,
+    encfs6_config: Path,
+    rclone: Path,
 ) -> None:
     message = (
         'Require a version of Python with a fix for '
@@ -117,10 +117,10 @@ def _pre_command_setup(
     if sys.version_info.major == 3 and sys.version_info.minor == 6:
         assert sys.version_info.micro >= 2, message
 
-    os.environ['ENCFS6_CONFIG'] = str(config.encfs6_config)
+    os.environ['ENCFS6_CONFIG'] = str(encfs6_config)
 
     dependencies = (
-        str(config.rclone),
+        str(rclone),
         'unionfs-fuse',
         'encfs',
         'fusermount',
@@ -303,7 +303,11 @@ def unmount_all(ctx: click.core.Context, config: _Config) -> None:
     """
     Unmount all mountpoints associated with Cloud Drive Tools.
     """
-    _pre_command_setup(ctx=ctx, config=config)
+    _pre_command_setup(
+        ctx=ctx,
+        encfs6_config=config.encfs6_config,
+        rclone=config.rclone,
+    )
     _unmount_all(
         data_dir=config.data_dir,
         remote_encrypted=config.remote_encrypted,
@@ -320,7 +324,11 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
     """
     Upload local data to the cloud.
     """
-    _pre_command_setup(ctx=ctx, config=config)
+    _pre_command_setup(
+        ctx=ctx,
+        encfs6_config=config.encfs6_config,
+        rclone=config.rclone,
+    )
 
     upload_pid_file = Path(__file__).parent / 'upload.pid'
     if upload_pid_file.exists():
@@ -503,7 +511,11 @@ def sync_deletes(ctx: click.core.Context, config: _Config) -> None:
     """
     Reflect unionfs deleted file objects on Google Drive.
     """
-    _pre_command_setup(ctx=ctx, config=config)
+    _pre_command_setup(
+        ctx=ctx,
+        encfs6_config=config.encfs6_config,
+        rclone=config.rclone,
+    )
     _sync_deletes(
         local_decrypted=config.local_decrypted,
         encfs_pass=config.encfs_pass,
@@ -645,7 +657,11 @@ def mount(
     """
     Mount necessary directories.
     """
-    _pre_command_setup(ctx=ctx, config=config)
+    _pre_command_setup(
+        ctx=ctx,
+        encfs6_config=config.encfs6_config,
+        rclone=config.rclone,
+    )
     if not no_unmount:
         _unmount_all(
             data_dir=config.data_dir,
@@ -754,7 +770,11 @@ def show_encoded_path(
     """
     Show the encfs encoded path given a decoded file path or name.
     """
-    _pre_command_setup(ctx=ctx, config=config)
+    _pre_command_setup(
+        ctx=ctx,
+        encfs6_config=config.encfs6_config,
+        rclone=config.rclone,
+    )
     encoded_path = _encode_with_encfs(
         path_or_file_name=decoded_path,
         encfs_pass=config.encfs_pass,
@@ -777,7 +797,11 @@ def move_file_or_dir(
     """
     Move a file from source to destination.
     """
-    _pre_command_setup(ctx=ctx, config=config)
+    _pre_command_setup(
+        ctx=ctx,
+        encfs6_config=config.encfs6_config,
+        rclone=config.rclone,
+    )
     encoded_src_path = _encode_with_encfs(
         path_or_file_name=src,
         encfs_pass=config.encfs_pass,
@@ -824,7 +848,11 @@ def mkdir(
     """
     Create a directory.
     """
-    _pre_command_setup(ctx=ctx, config=config)
+    _pre_command_setup(
+        ctx=ctx,
+        encfs6_config=config.encfs6_config,
+        rclone=config.rclone,
+    )
     encoded_path = _encode_with_encfs(
         path_or_file_name=path,
         encfs_pass=config.encfs_pass,
@@ -855,7 +883,11 @@ def acd_cli_mount(ctx: click.core.Context, config: _Config) -> None:
     """
     Foreground mount which will keep remounting until unmount file exists.
     """
-    _pre_command_setup(ctx=ctx, config=config)
+    _pre_command_setup(
+        ctx=ctx,
+        encfs6_config=config.encfs6_config,
+        rclone=config.rclone,
+    )
     _mount_cloud_storage(
         rclone_remote=config.rclone_remote,
         unmount_lock_file=config.unmount_lock_file,
