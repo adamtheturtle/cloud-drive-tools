@@ -11,7 +11,6 @@ import os
 import shutil
 import subprocess
 import sys
-import tempfile
 import time
 from pathlib import Path
 from typing import Callable, Dict, Optional, Union
@@ -637,7 +636,6 @@ def _mount_data_dir(
     subprocess.run(args=unionfs_fuse_args, check=True)
 
 
-
 @click.command('mount-data-dir')
 @config_option
 @click.pass_context
@@ -717,7 +715,6 @@ def _mount_cloud_storage(
     message = 'The cloud drive mount exited cleanly'
     LOGGER.info(message)
     unmount_lock_file.unlink()
-
 
 
 def _encode_with_encfs(
