@@ -1027,6 +1027,31 @@ def check_config(ctx: click.core.Context, config: _Config) -> None:
     )
 
 
+@click.command('wait-for-cloud-storage-mount')
+@config_option
+@click.pass_context
+def wait_for_cloud_storage_mount(
+    ctx: click.core.Context,
+    config: _Config,
+) -> None:
+    """
+    Wait for the cloud storage mount for a short while.
+
+    Exit with an error if it is not ready within the expected time.
+    """
+    _pre_command_setup(
+        ctx=ctx,
+        encfs6_config=config.encfs6_config,
+        rclone=config.rclone,
+    )
+
+    _wait_for_remote_mount(
+        ctx=ctx,
+        remote_encrypted=config.remote_encrypted,
+        path_on_cloud_drive=config.path_on_cloud_drive,
+    )
+
+
 cloud_drive_tools.add_command(check_config)
 cloud_drive_tools.add_command(mkdir)
 cloud_drive_tools.add_command(mount)
@@ -1037,6 +1062,7 @@ cloud_drive_tools.add_command(show_encoded_path)
 cloud_drive_tools.add_command(sync_deletes)
 cloud_drive_tools.add_command(unmount_all)
 cloud_drive_tools.add_command(upload)
+cloud_drive_tools.add_command(wait_for_cloud_storage_mount)
 
 if __name__ == '__main__':
     cloud_drive_tools()
