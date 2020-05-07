@@ -504,13 +504,24 @@ def sync_deletes(ctx: click.core.Context, config: _Config) -> None:
     )
 
 
-def _mount(ctx: click.core.Context, config: _Config) -> None:
+def _mount(
+    ctx: click.core.Context,
+    remote_encrypted: Path,
+    remote_decrypted: Path,
+    local_encrypted: Path,
+    local_decrypted: Path,
+    data_dir: Path,
+    config_dict: Dict[str, Union[float, int, str, bool]],
+    cloud_drive_tools_path: Path,
+    encfs_pass: str,
+    path_on_cloud_drive: str,
+) -> None:
     dirs_to_create = [
-        config.remote_encrypted,
-        config.remote_decrypted,
-        config.local_encrypted,
-        config.local_decrypted,
-        config.data_dir,
+        remote_encrypted,
+        remote_decrypted,
+        local_encrypted,
+        local_decrypted,
+        data_dir,
     ]
 
     for directory in dirs_to_create:
@@ -530,13 +541,13 @@ def _mount(ctx: click.core.Context, config: _Config) -> None:
             )
 
     # pathlib.Path does not handle `///` well in a path.
-    remote_mount = f'{config.remote_encrypted}//{config.path_on_cloud_drive}'
+    remote_mount = f'{remote_encrypted}//{path_on_cloud_drive}'
 
     message = 'Mounting cloud storage drive'
     LOGGER.info(message)
     _, config_file_path_str = tempfile.mkstemp()
     config_file_path = Path(config_file_path_str)
-    config_contents = yaml.dump(data=config.as_dict())
+    config_contents = yaml.dump(data=config_dict)
     config_file_path.write_text(config_contents)
     pid = os.getpid()
     screen_log_dir = Path('/var/log')
@@ -551,7 +562,7 @@ def _mount(ctx: click.core.Context, config: _Config) -> None:
         '-dm',
         '-S',
         'cloud-drive-tools-mount',
-        str(config.cloud_drive_tools_path),
+        str(cloud_drive_tools_path),
         'acd-cli-mount',
         '-c',
         str(config_file_path),
@@ -576,10 +587,10 @@ def _mount(ctx: click.core.Context, config: _Config) -> None:
     encfs_args = [
         'encfs',
         '--extpass',
-        f'echo {config.encfs_pass}',
+        f'echo {encfs_pass}',
         '--reverse',
-        str(config.local_decrypted),
-        str(config.local_encrypted),
+        str(local_decrypted),
+        str(local_encrypted),
     ]
     subprocess.run(args=encfs_args, check=True)
 
@@ -588,9 +599,9 @@ def _mount(ctx: click.core.Context, config: _Config) -> None:
     encfs_args = [
         'encfs',
         '--extpass',
-        f'echo {config.encfs_pass}',
+        f'echo {encfs_pass}',
         remote_mount,
-        str(config.remote_decrypted),
+        str(remote_decrypted),
     ]
     subprocess.run(args=encfs_args, check=True)
 
@@ -600,8 +611,8 @@ def _mount(ctx: click.core.Context, config: _Config) -> None:
         'unionfs-fuse',
         '-o',
         'cow,allow_other',
-        f'{config.local_decrypted}=RW:{config.remote_decrypted}=RO',
-        str(config.data_dir),
+        f'{local_decrypted}=RW:{remote_decrypted}=RO',
+        str(data_dir),
     ]
     subprocess.run(args=unionfs_fuse_args, check=True)
 
@@ -625,7 +636,19 @@ def mount(
     _pre_command_setup(ctx=ctx, config=config)
     if not no_unmount:
         _unmount_all(config=config)
-    _mount(ctx=ctx, config=config)
+
+    _mount(
+        ctx=ctx,
+        remote_encrypted=config.remote_encrypted,
+        remote_decrypted=config.remote_decrypted,
+        local_encrypted=config.local_encrypted,
+        local_decrypted=config.local_decrypted,
+        data_dir=config.data_dir,
+        config_dict=config.as_dict(),
+        cloud_drive_tools_path=config.cloud_drive_tools_path,
+        encfs_pass=config.encfs_pass,
+        path_on_cloud_drive=config.path_on_cloud_drive,
+    )
 
 
 def _mount_cloud_storage(config: _Config) -> None:
