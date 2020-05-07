@@ -11,7 +11,6 @@ import os
 import shutil
 import subprocess
 import sys
-import tempfile
 import time
 from pathlib import Path
 from typing import Callable, Dict, Optional, Union
@@ -119,13 +118,7 @@ def _pre_command_setup(
 
     os.environ['ENCFS6_CONFIG'] = str(encfs6_config)
 
-    dependencies = (
-        str(rclone),
-        'unionfs-fuse',
-        'encfs',
-        'fusermount',
-        'screen',
-    )
+    dependencies = (str(rclone), 'unionfs-fuse', 'encfs', 'fusermount')
     for dependency in dependencies:
         if shutil.which(str(dependency)) is None:
             message = f'"{dependency}" is not available on the PATH.'
@@ -575,7 +568,7 @@ def _wait_for_remote_mount(
     """
     # pathlib.Path does not handle `///` well in a path.
     remote_mount = f'{remote_encrypted}//{path_on_cloud_drive}'
-    # After `screen` starts it takes some time to mount the drive.
+    # After the mount starts it takes some time to mount the drive.
     attempts = 0
     max_attempts = 5
     sleep_seconds = 5
@@ -641,58 +634,6 @@ def _mount_data_dir(
         str(data_dir),
     ]
     subprocess.run(args=unionfs_fuse_args, check=True)
-
-
-@click.command('mount')
-@click.option(
-    '--no-unmount',
-    is_flag=True,
-    help='Do not unmount before trying to mount filesystems.',
-)
-@config_option
-@click.pass_context
-def mount(
-    ctx: click.core.Context,
-    config: _Config,
-    no_unmount: bool,
-) -> None:
-    """
-    Mount necessary directories.
-    """
-    _pre_command_setup(
-        ctx=ctx,
-        encfs6_config=config.encfs6_config,
-        rclone=config.rclone,
-    )
-    if not no_unmount:
-        _unmount_all(
-            data_dir=config.data_dir,
-            remote_encrypted=config.remote_encrypted,
-            unmount_lock_file=config.unmount_lock_file,
-            local_encrypted=config.local_encrypted,
-            remote_decrypted=config.remote_decrypted,
-        )
-
-    _mount_cloud_storage_background(
-        config_dict=config.as_dict(),
-        cloud_drive_tools_path=config.cloud_drive_tools_path,
-    )
-
-    _wait_for_remote_mount(
-        ctx=ctx,
-        remote_encrypted=config.remote_encrypted,
-        path_on_cloud_drive=config.path_on_cloud_drive,
-    )
-
-    _mount_data_dir(
-        remote_encrypted=config.remote_encrypted,
-        remote_decrypted=config.remote_decrypted,
-        local_encrypted=config.local_encrypted,
-        local_decrypted=config.local_decrypted,
-        data_dir=config.data_dir,
-        encfs_pass=config.encfs_pass,
-        path_on_cloud_drive=config.path_on_cloud_drive,
-    )
 
 
 @click.command('mount-data-dir')
@@ -774,46 +715,6 @@ def _mount_cloud_storage(
     message = 'The cloud drive mount exited cleanly'
     LOGGER.info(message)
     unmount_lock_file.unlink()
-
-
-def _mount_cloud_storage_background(
-    config_dict: Dict[str, Union[float, bool, str]],
-    cloud_drive_tools_path: Path,
-) -> None:
-    """
-    Mount cloud storage as a background task.
-
-    This will return before the mount is ready.
-
-    Logs are sent to ``/var/log``.
-    """
-
-    message = 'Mounting cloud storage drive'
-    LOGGER.info(message)
-    _, config_file_path_str = tempfile.mkstemp()
-    config_file_path = Path(config_file_path_str)
-    config_contents = yaml.dump(data=config_dict)
-    config_file_path.write_text(config_contents)
-    pid = os.getpid()
-    screen_log_dir = Path('/var/log')
-    screen_log_filename = f'cloud-drive-tools-screenlog.{pid}'
-    screen_log_path = screen_log_dir / screen_log_filename
-
-    screen_args = [
-        'screen',
-        '-L',
-        '-Logfile',
-        str(screen_log_path),
-        '-dm',
-        '-S',
-        'cloud-drive-tools-mount',
-        str(cloud_drive_tools_path),
-        'cloud-drive-mount',
-        '-c',
-        str(config_file_path),
-    ]
-
-    subprocess.run(args=screen_args, check=True)
 
 
 def _encode_with_encfs(
@@ -1084,7 +985,6 @@ def wait_for_cloud_storage_mount(
 
 cloud_drive_tools.add_command(check_config)
 cloud_drive_tools.add_command(mkdir)
-cloud_drive_tools.add_command(mount)
 cloud_drive_tools.add_command(mount_cloud_storage)
 cloud_drive_tools.add_command(mount_data_dir)
 cloud_drive_tools.add_command(move_file_or_dir)
