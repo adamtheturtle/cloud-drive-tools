@@ -322,7 +322,16 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
 
     current_pid = os.getpid()
     upload_pid_file.write_text(str(current_pid))
-    _sync_deletes(config=config)
+    _sync_deletes(
+        local_decrypted=config.local_decrypted,
+        encfs_pass=config.encfs_pass,
+        remote_encrypted=config.remote_encrypted,
+        rclone_remote=config.rclone_remote,
+        path_on_cloud_drive=config.path_on_cloud_drive,
+        rclone_config_path=config.rclone_config_path,
+        rclone=config.rclone,
+        rclone_verbose=config.rclone_verbose,
+    )
 
     # Determine the .unionfs-fuse directory name as to not upload it
     exclude_name = _encode_with_encfs(
@@ -366,8 +375,17 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
     upload_pid_file.unlink()
 
 
-def _sync_deletes(config: _Config) -> None:
-    search_dir = config.local_decrypted / '.unionfs-fuse'
+def _sync_deletes(
+    local_decrypted: Path,
+    encfs_pass: str,
+    remote_encrypted: Path,
+    rclone_remote: str,
+    path_on_cloud_drive: str,
+    rclone_config_path: Path,
+    rclone: Path,
+    rclone_verbose: bool,
+) -> None:
+    search_dir = local_decrypted / '.unionfs-fuse'
 
     if not (search_dir.exists() and search_dir.is_dir()):
         message = 'No .unionfs-fuse/ directory found, nothing to delete'
@@ -387,8 +405,8 @@ def _sync_deletes(config: _Config) -> None:
         )
         encname = _encode_with_encfs(
             path_or_file_name=str(not_hidden_relative_file),
-            encfs_pass=config.encfs_pass,
-            root_dir=config.remote_encrypted,
+            encfs_pass=encfs_pass,
+            root_dir=remote_encrypted,
         )
 
         if not encname:
@@ -398,8 +416,8 @@ def _sync_deletes(config: _Config) -> None:
             continue
 
         rclone_path = _rclone_path(
-            rclone_remote=config.rclone_remote,
-            rclone_root=config.path_on_cloud_drive,
+            rclone_remote=rclone_remote,
+            rclone_root=path_on_cloud_drive,
             rclone_relative_path=encname,
         )
 
@@ -407,10 +425,10 @@ def _sync_deletes(config: _Config) -> None:
         LOGGER.info(message)
 
         rclone_args = [
-            str(config.rclone),
+            str(rclone),
             '--config',
-            str(config.rclone_config_path),
-            _rclone_verbosity_flag(verbose=config.rclone_verbose),
+            str(rclone_config_path),
+            _rclone_verbosity_flag(verbose=rclone_verbose),
             'ls',
             '--max-depth',
             '1',
@@ -438,10 +456,10 @@ def _sync_deletes(config: _Config) -> None:
                 delete_cmd = 'purge'
 
             rclone_delete_args = [
-                str(config.rclone),
+                str(rclone),
                 '--config',
-                str(config.rclone_config_path),
-                _rclone_verbosity_flag(verbose=config.rclone_verbose),
+                str(rclone_config_path),
+                _rclone_verbosity_flag(verbose=rclone_verbose),
                 delete_cmd,
                 rclone_path,
             ]
@@ -474,7 +492,16 @@ def sync_deletes(ctx: click.core.Context, config: _Config) -> None:
     Reflect unionfs deleted file objects on Google Drive.
     """
     _pre_command_setup(ctx=ctx, config=config)
-    _sync_deletes(config=config)
+    _sync_deletes(
+        local_decrypted=config.local_decrypted,
+        encfs_pass=config.encfs_pass,
+        remote_encrypted=config.remote_encrypted,
+        rclone_remote=config.rclone_remote,
+        path_on_cloud_drive=config.path_on_cloud_drive,
+        rclone_config_path=config.rclone_config_path,
+        rclone=config.rclone,
+        rclone_verbose=config.rclone_verbose,
+    )
 
 
 def _mount(ctx: click.core.Context, config: _Config) -> None:
