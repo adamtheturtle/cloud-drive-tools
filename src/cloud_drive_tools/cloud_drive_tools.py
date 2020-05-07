@@ -564,6 +564,33 @@ def _create_dirs(
             LOGGER.info(message)
 
 
+def _wait_for_remote_mount(
+    ctx: click.core.Context,
+    remote_encrypted: Path,
+    path_on_cloud_drive: str,
+) -> None:
+    """
+    Wait for the rclone mount or error if it does not start within some time
+    close to 25 seconds.
+    """
+    # pathlib.Path does not handle `///` well in a path.
+    remote_mount = f'{remote_encrypted}//{path_on_cloud_drive}'
+    # After `screen` starts it takes some time to mount the drive.
+    attempts = 0
+    max_attempts = 5
+    sleep_seconds = 5
+
+    while not os.path.exists(remote_mount):
+        attempts += 1
+        if attempts > max_attempts:
+            message = 'Remote mount not found after 5 attempts, exiting'
+            ctx.fail(message)
+
+        message = f'Remote mount {remote_mount} does not exist yet, waiting.'
+        LOGGER.info(message)
+        time.sleep(sleep_seconds)
+
+
 def _mount(
     ctx: click.core.Context,
     remote_encrypted: Path,
@@ -611,19 +638,11 @@ def _mount(
 
     subprocess.run(args=screen_args, check=True)
 
-    # pathlib.Path does not handle `///` well in a path.
-    remote_mount = f'{remote_encrypted}//{path_on_cloud_drive}'
-    # After `screen` starts it takes some time to mount the drive.
-    attempts = 0
-    while not os.path.exists(remote_mount):
-        attempts += 1
-        if attempts > 5:
-            message = 'Remote mount not found after 5 attempts, exiting'
-            ctx.fail(message)
-
-        message = f'Remote mount {remote_mount} does not exist yet, waiting.'
-        LOGGER.info(message)
-        time.sleep(5)
+    _wait_for_remote_mount(
+        ctx=ctx,
+        remote_encrypted=remote_encrypted,
+        path_on_cloud_drive=path_on_cloud_drive,
+    )
 
     message = 'Mounting local encrypted filesystem'
     LOGGER.info(message)
@@ -637,6 +656,8 @@ def _mount(
     ]
     subprocess.run(args=encfs_args, check=True)
 
+    # pathlib.Path does not handle `///` well in a path.
+    remote_mount = f'{remote_encrypted}//{path_on_cloud_drive}'
     message = 'Mounting cloud decrypted filesystem'
     LOGGER.info(message)
     encfs_args = [
