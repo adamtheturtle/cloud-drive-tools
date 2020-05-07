@@ -596,7 +596,7 @@ def _mount(
 
     # After `screen` starts it takes some time to mount the drive.
     attempts = 0
-    while not os.path.exists(str(remote_mount)):
+    while not os.path.exists(remote_mount):
         attempts += 1
         if attempts > 5:
             message = 'Remote mount not found after 5 attempts, exiting'
