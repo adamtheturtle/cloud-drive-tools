@@ -349,6 +349,8 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
         '--max-size 100G',
         # Avoid retrying when the 750 GB / day upload limit is hit.
         '--drive-stop-on-upload-limit',
+        # Make fewer API requests.
+        '--fast-list',
         # Exclude the ``.unionfs-fuse`` directory as this is where files to be
         # deleted go.
         '--exclude',
