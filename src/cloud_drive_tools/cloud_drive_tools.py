@@ -346,7 +346,8 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
         '--tpslimit',
         '1',
         # Try to avoid limit of uploading files > 100 GB.
-        '--max-size 100G',
+        '--max-size',
+        '100G',
         # Avoid retrying when the 750 GB / day upload limit is hit.
         '--drive-stop-on-upload-limit',
         # Make fewer API requests.
