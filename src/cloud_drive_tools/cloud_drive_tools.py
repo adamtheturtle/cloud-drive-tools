@@ -342,8 +342,15 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
         _rclone_verbosity_flag(verbose=config.rclone_verbose),
         'copy',
         # Try to avoid Google 403: User Rate Limit Exceeded.
+        # This happens when 10 total transfers happen in a second.
         '--tpslimit',
-        '5',
+        '1',
+        # Try to avoid limit of uploading files > 100 GB.
+        '--max-size 100G',
+        # Avoid retrying when the 750 GB / day upload limit is hit.
+        '--drive-stop-on-upload-limit',
+        # Exclude the ``.unionfs-fuse`` directory as this is where files to be
+        # deleted go.
         '--exclude',
         f'/{exclude_name}/*',
         str(config.local_encrypted),
