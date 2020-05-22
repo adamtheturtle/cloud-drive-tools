@@ -596,15 +596,15 @@ def _mount_data_dir(
     ]
     subprocess.run(args=encfs_args, check=True)
 
-    # pathlib.Path does not handle `///` well in a path.
-    remote_mount = f'{remote_encrypted}//{path_on_cloud_drive}'
+    relative_path_on_cloud_drive = Path(path_on_cloud_drive).relative_to('/')
+    remote_mount = remote_encrypted / relative_path_on_cloud_drive
     message = 'Mounting cloud decrypted filesystem'
     LOGGER.info(message)
     encfs_args = [
         'encfs',
         '--extpass',
         f'echo {encfs_pass}',
-        remote_mount,
+        str(remote_mount),
         str(remote_decrypted),
     ]
     subprocess.run(args=encfs_args, check=True)
