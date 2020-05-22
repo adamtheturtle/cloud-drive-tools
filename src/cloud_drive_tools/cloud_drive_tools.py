@@ -552,8 +552,8 @@ def _wait_for_remote_mount(
     Wait for the rclone mount or error if it does not start within some time
     close to 25 seconds.
     """
-    remote_mount = remote_encrypted / Path(path_on_cloud_drive
-                                           ).relative_to('/')
+    relative_path_on_cloud_drive = Path(path_on_cloud_drive).relative_to('/')
+    remote_mount = remote_encrypted / relative_path_on_cloud_drive
     attempts = 0
     max_attempts = 5
     sleep_seconds = 5
