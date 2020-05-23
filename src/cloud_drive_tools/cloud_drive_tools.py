@@ -403,6 +403,13 @@ def _sync_deletes(
     failed_sync_deletes = False
 
     for matched_file in matched_files:
+        if not matched_file.exists():
+            # It could be that the matched file was under a directory which
+            # has now been deleted.
+            continue
+
+        message = f'{matched_file} exists locally'
+        LOGGER.info(message)
         hidden_relative_file_path = matched_file.relative_to(search_dir)
         assert str(hidden_relative_file_path).endswith(hidden_flag)
         not_hidden_relative_file = Path(
@@ -477,7 +484,17 @@ def _sync_deletes(
         if matched_file.is_file():
             matched_file.unlink()
         else:
+            # We delete the folder "<FOLDER_NAME>_HIDDEN~" but also the
+            # matching directory, if it exists, which contains any
+            # sub-directories or files.
+            #
+            # This means we do not have to have a list of failed ``ls``s on
+            # those directories.
             shutil.rmtree(matched_file)
+
+            non_hidden_version = Path(str(matched_file)[:-len(hidden_flag)])
+            if non_hidden_version.exists():
+                shutil.rmtree(non_hidden_version)
 
     if not failed_sync_deletes:
         # Delete the search directory so that it is not uploaded as an
