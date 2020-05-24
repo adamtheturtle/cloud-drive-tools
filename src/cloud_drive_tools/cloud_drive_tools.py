@@ -273,9 +273,6 @@ def unmount_all(config: _Config) -> None:
     local_encrypted = config.local_encrypted
     data_dir = config.data_dir
 
-    message = 'Unmounting all Cloud Drive Tools mountpoints'
-    LOGGER.info(message)
-
     _unmount(mountpoint=data_dir)
     unmount_lock_file.touch()
     _unmount(mountpoint=remote_encrypted)
