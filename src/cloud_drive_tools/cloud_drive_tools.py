@@ -579,7 +579,7 @@ def _wait_for_remote_mount(
     max_attempts = 5
     sleep_seconds = 5
 
-    while not os.path.exists(remote_mount):
+    while not remote_mount.exists():
         attempts += 1
         if attempts > max_attempts:
             message = (
