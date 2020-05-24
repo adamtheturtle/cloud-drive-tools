@@ -267,6 +267,12 @@ def unmount_all(config: _Config) -> None:
     """
     Unmount all mountpoints associated with Cloud Drive Tools.
     """
+    remote_encrypted = config.remote_encrypted
+    remote_decrypted = config.remote_decrypted
+    unmount_lock_file = config.unmount_lock_file
+    local_encrypted = config.local_encrypted
+    data_dir = config.data_dir
+
     message = 'Unmounting all Cloud Drive Tools mountpoints'
     LOGGER.info(message)
 
