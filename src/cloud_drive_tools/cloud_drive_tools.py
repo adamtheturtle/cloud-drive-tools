@@ -261,13 +261,12 @@ def _unmount(mountpoint: Path) -> None:
     subprocess.run(args=unmount_args, check=True)
 
 
-def _unmount_all(
-    data_dir: Path,
-    remote_encrypted: Path,
-    unmount_lock_file: Path,
-    local_encrypted: Path,
-    remote_decrypted: Path,
-) -> None:
+@click.command('unmount')
+@config_option
+def unmount_all(config: _Config) -> None:
+    """
+    Unmount all mountpoints associated with Cloud Drive Tools.
+    """
     message = 'Unmounting all Cloud Drive Tools mountpoints'
     LOGGER.info(message)
 
@@ -281,21 +280,6 @@ def _unmount_all(
         pass
     _unmount(mountpoint=remote_decrypted)
     _unmount(mountpoint=local_encrypted)
-
-
-@click.command('unmount')
-@config_option
-def unmount_all(config: _Config) -> None:
-    """
-    Unmount all mountpoints associated with Cloud Drive Tools.
-    """
-    _unmount_all(
-        data_dir=config.data_dir,
-        remote_encrypted=config.remote_encrypted,
-        unmount_lock_file=config.unmount_lock_file,
-        local_encrypted=config.local_encrypted,
-        remote_decrypted=config.remote_decrypted,
-    )
 
 
 @click.command('upload')
