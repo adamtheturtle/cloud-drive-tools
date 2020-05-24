@@ -276,7 +276,24 @@ def unmount_all(config: _Config) -> None:
     _unmount(mountpoint=data_dir)
     unmount_lock_file.touch()
     _unmount(mountpoint=remote_encrypted)
-    time.sleep(6)
+
+    attempts = 0
+    max_attempts = 10
+    sleep_seconds = 1
+
+    # We do not use ``remote_mount.is_mount()`` as that was only added in
+    # Python 3.7 and this tool currently supports Python 3.6.
+    while os.path.ismount(str(remote_encrypted)):
+        attempts += 1
+        if attempts > max_attempts:
+            message = (
+                f'{remote_encrypted} not unmounted after {max_attempts} '
+                'attempts.'
+            )
+            LOGGER.error(message)
+
+        time.sleep(sleep_seconds)
+
     try:
         unmount_lock_file.unlink()
     except FileNotFoundError:
@@ -562,10 +579,13 @@ def _wait_for_remote_mount(
     max_attempts = 5
     sleep_seconds = 5
 
-    while not os.path.exists(remote_mount):
+    while not remote_mount.exists():
         attempts += 1
         if attempts > max_attempts:
-            message = 'Remote mount not found after 5 attempts, exiting'
+            message = (
+                f'Remote mount not found after {max_attempts} attempts, '
+                'exiting.'
+            )
             ctx.fail(message)
 
         message = f'Remote mount {remote_mount} does not exist yet, waiting.'
@@ -688,12 +708,13 @@ def _mount_cloud_storage(
 
         subprocess.run(args=mount_args, check=True)
 
+        sleep_seconds = 2
         message = (
-            'Cloud storage mount exited - checking if to remount in a couple '
-            'of seconds'
+            'Cloud storage mount exited - checking whether to remount in '
+            f'{sleep_seconds} seconds.'
         )
         LOGGER.info(message)
-        time.sleep(2)
+        time.sleep(sleep_seconds)
 
     message = 'The cloud drive mount exited cleanly'
     LOGGER.info(message)
