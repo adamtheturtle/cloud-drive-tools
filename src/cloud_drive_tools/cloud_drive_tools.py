@@ -708,12 +708,13 @@ def _mount_cloud_storage(
 
         subprocess.run(args=mount_args, check=True)
 
+        sleep_seconds = 2
         message = (
-            'Cloud storage mount exited - checking if to remount in a couple '
-            'of seconds'
+            'Cloud storage mount exited - checking whether to remount in '
+            f'{sleep_seconds} seconds.'
         )
         LOGGER.info(message)
-        time.sleep(2)
+        time.sleep(sleep_seconds)
 
     message = 'The cloud drive mount exited cleanly'
     LOGGER.info(message)
