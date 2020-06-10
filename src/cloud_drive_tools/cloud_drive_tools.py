@@ -13,7 +13,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Callable, Dict, Optional, Union
+from typing import Callable, Optional, Union
 
 import click
 import yaml
@@ -61,21 +61,6 @@ class _Config:
         self.unmount_lock_file = Path(__file__).parent / unmount_lock_file_name
         # We should probably explicitly pass this to subprocesses.
         os.environ['ENCFS6_CONFIG'] = str(encfs6_config)
-
-    def as_dict(self) -> Dict[str, Union[str, float, bool]]:
-        return {
-            'cloud_drive_tools_path': str(self.cloud_drive_tools_path),
-            'data_dir': str(self.data_dir),
-            'days_to_keep_local': self.days_to_keep_local,
-            'encfs6_config': str(self.encfs6_config),
-            'encfs_pass': self.encfs_pass,
-            'mount_base': str(self._mount_base),
-            'path_on_cloud_drive': self.path_on_cloud_drive,
-            'rclone': str(self.rclone),
-            'rclone_config_path': str(self.rclone_config_path),
-            'rclone_remote': self.rclone_remote,
-            'rclone_verbose': self.rclone_verbose,
-        }
 
 
 @click.group(name='cloud-drive-tools')
@@ -384,7 +369,7 @@ def upload(ctx: click.core.Context, config: _Config) -> None:
     upload_pid_file.unlink()
 
 
-def _sync_deletes(
+def _sync_deletes(  # pylint:disable=too-many-statements
     local_decrypted: Path,
     encfs_pass: str,
     remote_encrypted: Path,
