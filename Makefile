@@ -2,9 +2,6 @@ SHELL := /bin/bash -euxo pipefail
 
 include lint.mk
 
-# Treat Sphinx warnings as errors
-SPHINXOPTS := -W
-
 # At the time of writing we do not have any .sh files and so we do not run
 # shellcheck.
 .PHONY: lint
