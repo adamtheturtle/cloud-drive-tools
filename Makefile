@@ -1,88 +1,26 @@
 SHELL := /bin/bash -euxo pipefail
 
-.PHONY: yapf
-yapf:
-	yapf \
-	    --diff \
-	    --recursive \
-	    .
+include lint.mk
 
-.PHONY: fix-yapf
-fix-yapf:
-	yapf \
-	    --in-place \
-	    --recursive \
-	    .
-
-.PHONY: mypy
-mypy:
-	mypy *.py src/
-
-.PHONY: check-manifest
-check-manifest:
-	check-manifest .
-
-.PHONY: flake8
-flake8:
-	flake8 .
-
-.PHONY: isort
-isort:
-	isort --recursive --check-only
-
-.PHONY: pip-extra-reqs
-pip-extra-reqs:
-	pip-extra-reqs src/
-
-.PHONY: pip-missing-reqs
-pip-missing-reqs:
-	pip-missing-reqs src/
-
-.PHONY: pydocstyle
-pydocstyle:
-	pydocstyle
-
-.PHONY: pylint
-pylint:
-	pylint *.py src/
-
-.PHONY: pyroma
-pyroma:
-	pyroma .
-
-.PHONY: vulture
-vulture:
-	vulture --min-confidence 100 --exclude _vendor .
-
-.PHONY: autoflake
-autoflake:
-	autoflake \
-	    --in-place \
-	    --recursive \
-	    --remove-all-unused-imports \
-	    --remove-unused-variables \
-	    --expand-star-imports \
-	    .
-
-.PHONY: doc8
-doc8:
-	doc8 .
-
+# At the time of writing we do not have any .sh files and so we do not run
+# shellcheck.
 .PHONY: lint
 lint: \
     check-manifest \
-		doc8 \
+    doc8 \
     flake8 \
     isort \
     mypy \
-		pip-extra-reqs \
-		pip-missing-reqs \
-    pydocstyle \
-    pylint \
+    pip-extra-reqs \
+    pip-missing-reqs \
+    pyroma \
     vulture \
+    pylint \
+    pydocstyle \
     yapf
 
-# Fix some linting errors.
 .PHONY: fix-lint
-fix-lint: autoflake fix-yapf
-	isort --recursive --apply
+fix-lint: \
+    autoflake \
+    fix-yapf \
+    fix-isort
