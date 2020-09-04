@@ -6,6 +6,7 @@ include lint.mk
 # shellcheck.
 .PHONY: lint
 lint: \
+    black \
     check-manifest \
     doc8 \
     flake8 \
@@ -17,10 +18,9 @@ lint: \
     vulture \
     pylint \
     pydocstyle \
-    yapf
 
 .PHONY: fix-lint
 fix-lint: \
     autoflake \
-    fix-yapf \
+    fix-black \
     fix-isort

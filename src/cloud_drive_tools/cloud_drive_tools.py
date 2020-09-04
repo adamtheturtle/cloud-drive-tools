@@ -184,7 +184,9 @@ def config_option(command: Callable[..., None]) -> Callable[..., None]:
         callback=_get_config,
         default=str(default_config_path),
         help='The path to a file including configuration YAML.',
-    )(command)  # type: Callable[..., None]
+    )(
+        command,
+    )  # type: Callable[..., None]
     return function
 
 
@@ -402,7 +404,7 @@ def _sync_deletes(  # pylint:disable=too-many-statements
         hidden_relative_file_path = matched_file.relative_to(search_dir)
         assert str(hidden_relative_file_path).endswith(hidden_flag)
         not_hidden_relative_file = Path(
-            str(hidden_relative_file_path)[:-len(hidden_flag)],
+            str(hidden_relative_file_path)[: -len(hidden_flag)],
         )
         encname = _encode_with_encfs(
             path_or_file_name=str(not_hidden_relative_file),
@@ -481,7 +483,7 @@ def _sync_deletes(  # pylint:disable=too-many-statements
             # those directories.
             shutil.rmtree(matched_file)
 
-            non_hidden_version = Path(str(matched_file)[:-len(hidden_flag)])
+            non_hidden_version = Path(str(matched_file)[: -len(hidden_flag)])
             if non_hidden_version.exists():
                 shutil.rmtree(non_hidden_version)
 
