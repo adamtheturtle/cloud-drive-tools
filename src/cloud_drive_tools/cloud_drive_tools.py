@@ -30,6 +30,7 @@ class _Config:
         days_to_keep_local: float,
         encfs6_config: Path,
         encfs_pass: str,
+        max_retries_remote_mount: int,
         mount_base: Path,
         path_on_cloud_drive: str,
         rclone: Path,
@@ -45,6 +46,7 @@ class _Config:
         self.days_to_keep_local = days_to_keep_local
         self.encfs6_config = encfs6_config
         self.encfs_pass = encfs_pass
+        self.max_retries_remote_mount = max_retries_remote_mount
         self.path_on_cloud_drive = path_on_cloud_drive
         self.rclone = rclone
         message = f'"{rclone}" is not available on the PATH.'
@@ -162,6 +164,7 @@ def _get_config(
         days_to_keep_local=float(config['days_to_keep_local']),
         encfs6_config=Path(config['encfs6_config']),
         encfs_pass=str(config['encfs_pass']),
+        max_retries_remote_mount=int(config['max_retries_remote_mount']),
         mount_base=Path(config['mount_base']),
         path_on_cloud_drive=str(config['path_on_cloud_drive']),
         rclone=Path(config['rclone']),
@@ -552,6 +555,7 @@ def _create_dirs(
 
 
 def _wait_for_remote_mount(
+    max_attempts: int,
     ctx: click.core.Context,
     remote_encrypted: Path,
     path_on_cloud_drive: str,
@@ -563,7 +567,6 @@ def _wait_for_remote_mount(
     relative_path_on_cloud_drive = Path(path_on_cloud_drive).relative_to('/')
     remote_mount = remote_encrypted / relative_path_on_cloud_drive
     attempts = 0
-    max_attempts = 5
     sleep_seconds = 5
 
     while not remote_mount.exists():
@@ -641,6 +644,7 @@ def mount_data_dir(ctx: click.core.Context, config: _Config) -> None:
     """
     _wait_for_remote_mount(
         ctx=ctx,
+        max_attempts=config.max_retries_remote_mount,
         remote_encrypted=config.remote_encrypted,
         path_on_cloud_drive=config.path_on_cloud_drive,
     )
@@ -910,6 +914,7 @@ def wait_for_cloud_storage_mount(
     """
     _wait_for_remote_mount(
         ctx=ctx,
+        max_attempts=config.max_retries_remote_mount,
         remote_encrypted=config.remote_encrypted,
         path_on_cloud_drive=config.path_on_cloud_drive,
     )
