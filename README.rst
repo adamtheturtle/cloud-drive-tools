@@ -26,8 +26,8 @@ For example:
    days_to_keep_local: 14
    encfs6_config: "/home/encfs6.xml"
    encfs_pass: "XXX"
-   max_retries_remote_mount: 10
    # Set max retries higher if rclone takes a long time to mount.
+   max_retries_remote_mount: 10
    mount_base: "/home/.mounts"
    path_on_cloud_drive: "/Media"
    rclone: "/home/rclone-v1.37-linux-amd64/rclone"
