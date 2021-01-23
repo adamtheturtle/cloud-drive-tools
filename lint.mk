@@ -12,7 +12,7 @@ fix-black:
 
 .PHONY: mypy
 mypy:
-	mypy *.py src/
+	mypy .
 
 .PHONY: check-manifest
 check-manifest:

@@ -5,15 +5,16 @@ See https://github.com/msh100/ACDTools/blob/gdrive-support/acdtools for
 the inspiration.
 """
 
+from __future__ import annotations
+
 import datetime
 import logging
 import os
 import shutil
 import subprocess
-import sys
 import time
 from pathlib import Path
-from typing import Callable, Optional, Union
+from typing import Callable
 
 import click
 import yaml
@@ -70,13 +71,6 @@ def cloud_drive_tools() -> None:
     """
     Manage Plex tools.
     """
-    message = (
-        'Require a version of Python with a fix for '
-        'https://bugs.python.org/issue35192'
-    )
-    if sys.version_info.major == 3 and sys.version_info.minor == 6:
-        assert sys.version_info.micro >= 2, message
-
     dependencies = ('unionfs-fuse', 'encfs', 'fusermount')
     for dependency in dependencies:
         message = f'"{dependency}" is not available on the PATH.'
@@ -95,7 +89,7 @@ def _rclone_verbosity_flag(verbose: bool) -> str:
 def _rclone_path(
     rclone_remote: str,
     rclone_root: str,
-    rclone_relative_path: Optional[str],
+    rclone_relative_path: str | None,
 ) -> str:
     """
     Return the ``rclone`` path to use.
@@ -108,8 +102,8 @@ def _rclone_path(
 
 def _get_config(
     ctx: click.core.Context,
-    param: Union[click.core.Option, click.core.Parameter],
-    value: Optional[Union[int, bool, str]],
+    param: click.core.Option | click.core.Parameter,
+    value: int | bool | str | None,
 ) -> _Config:
     # We "use" variables to satisfy linting tools.
     for _ in (ctx, param):
