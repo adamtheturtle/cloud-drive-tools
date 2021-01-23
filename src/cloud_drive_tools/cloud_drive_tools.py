@@ -116,6 +116,7 @@ def _get_config(
             'days_to_keep_local',
             'encfs6_config',
             'encfs_pass',
+            'max_retries_remote_mount',
             'mount_base',
             'path_on_cloud_drive',
             'rclone',
