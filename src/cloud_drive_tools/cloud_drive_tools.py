@@ -72,13 +72,6 @@ def cloud_drive_tools() -> None:
     """
     Manage Plex tools.
     """
-    message = (
-        'Require a version of Python with a fix for '
-        'https://bugs.python.org/issue35192'
-    )
-    if sys.version_info.major == 3 and sys.version_info.minor == 6:
-        assert sys.version_info.micro >= 2, message
-
     dependencies = ('unionfs-fuse', 'encfs', 'fusermount')
     for dependency in dependencies:
         message = f'"{dependency}" is not available on the PATH.'

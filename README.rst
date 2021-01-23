@@ -40,8 +40,7 @@ For example:
 Installing
 ----------
 
-Requires Python 3.6.2+, or 3.7+.
-We require specific versions to avoid https://bugs.python.org/issue35192.
+Requires Python 3.8+.
 
 This can be installed with ``pip``, or ``pipsi``.
 
