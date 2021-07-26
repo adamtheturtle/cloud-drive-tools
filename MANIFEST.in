@@ -1,3 +1,2 @@
 include pyproject.toml
-include requirements.txt
-include dev-requirements.txt
+include requirements/*.txt
