@@ -2,6 +2,8 @@
 Setup script for Cloud Drive Tools.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 
 from setuptools import setup
