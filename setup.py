@@ -2,19 +2,30 @@
 Setup script for Cloud Drive Tools.
 """
 
+from __future__ import annotations
+
+from pathlib import Path
+
 from setuptools import setup
 
-with open('requirements/requirements.txt') as requirements:
-    INSTALL_REQUIRES = []
-    for line in requirements.readlines():
-        if not line.startswith('#'):
-            INSTALL_REQUIRES.append(line)
 
-with open('requirements/dev-requirements.txt') as dev_requirements:
-    DEV_REQUIRES = []
-    for line in dev_requirements.readlines():
-        if not line.startswith('#'):
-            DEV_REQUIRES.append(line)
+def _get_dependencies(requirements_file: Path) -> list[str]:
+    """
+    Return requirements from a requirements file.
+
+    This expects a requirements file with no ``--find-links`` lines.
+    """
+    lines = requirements_file.read_text().strip().split('\n')
+    return [line for line in lines if not line.startswith('#')]
+
+
+INSTALL_REQUIRES = _get_dependencies(
+    requirements_file=Path('requirements/requirements.txt'),
+)
+
+DEV_REQUIRES = _get_dependencies(
+    requirements_file=Path('requirements/dev-requirements.txt'),
+)
 
 setup(
     install_requires=INSTALL_REQUIRES,

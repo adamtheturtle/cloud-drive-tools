@@ -10,7 +10,7 @@ mypy==0.910
 pip_check_reqs==2.3.0
 pydocstyle==6.1.1
 pyenchant==3.2.1
-pylint==2.9.5
+pylint==2.10.2
 pyroma==3.2
 types-PyYAML==5.4.10
 vulture==2.3
