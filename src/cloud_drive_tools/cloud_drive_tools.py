@@ -127,7 +127,8 @@ def _get_config(
     )
     allowed_keys = required_keys
 
-    config_text = Path(str(value)).read_text()
+    config_file_path = Path(str(value))
+    config_text = config_file_path.read_text(encoding='utf-8')
     config = yaml.load(config_text, Loader=yaml.FullLoader) or {}
 
     missing_required_keys = required_keys - config.keys()
@@ -135,20 +136,18 @@ def _get_config(
 
     if missing_required_keys:
         message = (
-            'Using configuration file at "{config_file_path}". '
+            f'Using configuration file at "{config_file_path}". '
             'Missing the following configuration keys: {missing_keys}.'
         ).format(
-            config_file_path=str(value),
             missing_keys=', '.join(missing_required_keys),
         )
         raise click.BadParameter(message)
 
     if extra_keys:
         message = (
-            'Using configuration file at "{config_file_path}". '
+            f'Using configuration file at "{config_file_path}". '
             'The following keys were given but are not valid: {extra_keys}.'
         ).format(
-            config_file_path=str(value),
             extra_keys=', '.join(extra_keys),
         )
         raise click.BadParameter(message)
@@ -220,7 +219,7 @@ def _local_cleanup(days_to_keep_local: float, local_decrypted: Path) -> None:
 
 
 def _is_mountpoint(name: str) -> bool:
-    proc_mounts = Path('/proc/mounts').read_text().split('\n')
+    proc_mounts = Path('/proc/mounts').read_text(encoding='utf-8').split('\n')
     for mount_line in proc_mounts:
         if mount_line:
             path = mount_line.split()[1]
