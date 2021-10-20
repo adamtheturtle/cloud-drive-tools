@@ -162,3 +162,7 @@ ignore = [
 	"vuforia_secrets.env.example",
 	"lint.mk",
 ]
+
+[build-system]
+requires = ["setuptools", "pip", "wheel"]
+build-backend = "setuptools.build_meta"
