@@ -125,8 +125,8 @@ xfail_strict = true
 log_cli = true
 
 [tool.doc8]
-maxline-length = 2000
-ignore-path = [
+max_line_length = 2000
+ignore_path = [
     "./.eggs",
     "./docs/build",
     "./docs/build/spelling/output.txt",
