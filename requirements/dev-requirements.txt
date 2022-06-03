@@ -13,4 +13,4 @@ pyenchant==3.2.2
 pylint==2.14.0
 pyroma==4.0
 types-PyYAML==6.0.8
-vulture==2.3
+vulture==2.4
