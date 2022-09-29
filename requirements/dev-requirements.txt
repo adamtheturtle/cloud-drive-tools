@@ -13,5 +13,5 @@ pydocstyle==6.1.1
 pyenchant==3.2.2
 pylint==2.15.3
 pyroma==4.0
-types-PyYAML==6.0.11
+types-PyYAML==6.0.12
 vulture==2.6
