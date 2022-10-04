@@ -1,6 +1,15 @@
 cloud-drive-tools
 =================
 
+Deprecation
+-----------
+
+This project is no longer maintained.
+Use *rclone crypt* instead.
+
+Details
+-------
+
 Tooling for managing encrypted files on cloud drives.
 
 Inspired by https://github.com/msh100/ACDTools.
